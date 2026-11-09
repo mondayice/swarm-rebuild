@@ -23,3 +23,8 @@ define( 'SWARM_REBUILD_URL', plugin_dir_url( __FILE__ ) );
 require_once SWARM_REBUILD_DIR . 'includes/class-sr-settings.php';
 require_once SWARM_REBUILD_DIR . 'includes/class-sr-admin.php';
 require_once SWARM_REBUILD_DIR . 'includes/class-sr-frontend.php';
+
+if ( is_admin() ) {
+	add_action( 'admin_menu', array( 'SR_Admin', 'register_menu' ) );
+	add_action( 'admin_init', array( 'SR_Admin', 'register_settings' ) );
+}
