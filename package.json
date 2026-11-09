@@ -1,0 +1,8 @@
+{
+  "name": "swarm-rebuild-wp",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
