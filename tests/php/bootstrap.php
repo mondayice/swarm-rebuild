@@ -38,6 +38,7 @@ function untrailingslashit( $value ) {
 }
 
 function add_action( $tag, $callback, $priority = 10, $accepted_args = 1 ) {
+	$GLOBALS['__sr_actions'][] = array( $tag, $callback, $priority );
 	return true;
 }
 
@@ -81,6 +82,28 @@ function has_shortcode( $content, $tag ) {
 function get_post_meta( $post_id, $key, $single = false ) {
 	$meta = isset( $GLOBALS['__sr_post_meta'][ $post_id ][ $key ] ) ? $GLOBALS['__sr_post_meta'][ $post_id ][ $key ] : array();
 	return $single ? ( isset( $meta[0] ) ? $meta[0] : '' ) : $meta;
+}
+
+function get_post() {
+	return null;
+}
+
+function is_front_page() {
+	return false;
+}
+
+function is_home() {
+	return false;
+}
+
+function wp_enqueue_script_module( $handle, $src, $deps = array(), $version = false ) {
+	$GLOBALS['__sr_enqueued'][] = array( 'module', $handle, $src );
+	return true;
+}
+
+function wp_enqueue_style( $handle, $src, $deps = array(), $version = false ) {
+	$GLOBALS['__sr_enqueued'][] = array( 'style', $handle, $src );
+	return true;
 }
 
 if ( ! defined( 'SWARM_REBUILD_URL' ) ) {

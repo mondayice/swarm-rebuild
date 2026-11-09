@@ -32,6 +32,11 @@ if ( ! class_exists( 'SR_Frontend' ) ) {
 
 		public static function register() {
 			add_shortcode( self::SHORTCODE_TAG, array( __CLASS__, 'render_shortcode' ) );
+			// Registered up front at priority 2: adding it from inside
+			// enqueue_assets (which itself runs on wp_head at priority 1)
+			// would never execute that round — WP_Hook iterates a snapshot
+			// of the running priority's callbacks and never revisits it.
+			add_action( 'wp_head', array( __CLASS__, 'print_config' ), 2 );
 		}
 
 		public static function enqueue_assets() {
@@ -43,7 +48,6 @@ if ( ! class_exists( 'SR_Frontend' ) ) {
 			wp_enqueue_script_module( 'swarm-rebuild-loader', SWARM_REBUILD_URL . 'assets/js/loader.js', array(), SWARM_REBUILD_VERSION );
 			wp_enqueue_style( 'swarm-rebuild-card', SWARM_REBUILD_URL . 'assets/css/card.css', array(), SWARM_REBUILD_VERSION );
 			self::$config = self::build_config( $s, $ctx );
-			add_action( 'wp_head', array( __CLASS__, 'print_config' ), 1 );
 		}
 
 		public static function print_config() {

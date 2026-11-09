@@ -10,7 +10,36 @@ class FrontendTest extends TestCase {
 		$GLOBALS['__sr_options']        = array();
 		$GLOBALS['__sr_registered_tag'] = null;
 		$GLOBALS['__sr_post_meta']      = array();
+		$GLOBALS['__sr_actions']        = array();
+		$GLOBALS['__sr_enqueued']       = array();
 		$this->s = SR_Settings::defaults();
+	}
+
+	/**
+	 * Root cause of the "not working on a real site" report (Task 9):
+	 * print_config used to be added to wp_head at priority 1 from INSIDE
+	 * enqueue_assets — but wp_enqueue_scripts itself runs on wp_head at
+	 * priority 1, and a callback added to a priority that is mid-execution
+	 * never runs that round (WP_Hook iterates a snapshot). Registration must
+	 * happen ahead of time, at a priority other than 1.
+	 */
+	public function test_print_config_registered_on_wp_head_away_from_enqueue_priority() {
+		SR_Frontend::register();
+		$found = array();
+		foreach ( $GLOBALS['__sr_actions'] as list( $tag, $cb, $prio ) ) {
+			if ( 'wp_head' === $tag && is_array( $cb ) && 'SR_Frontend' === $cb[0] && 'print_config' === $cb[1] ) {
+				$found[] = $prio;
+			}
+		}
+		$this->assertNotEmpty( $found, 'print_config must be registered on wp_head' );
+		$this->assertNotContains( 1, $found, 'priority 1 collides with the running wp_enqueue_scripts callback' );
+	}
+
+	public function test_enqueue_assets_adds_no_runtime_hooks() {
+		$GLOBALS['__sr_options']['sr_settings'] = array( 'scope' => 'site' );
+		SR_Frontend::enqueue_assets();
+		$this->assertSame( array(), $GLOBALS['__sr_actions'], 'enqueue_assets must not add_action while wp_head priority 1 is executing' );
+		$this->assertNotEmpty( $GLOBALS['__sr_enqueued'] );
 	}
 
 	/* ---- is_in_scope ---- */
