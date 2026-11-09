@@ -1,7 +1,7 @@
 # Swarm Rebuild for WordPress — 状态快照
 
 > 用途:上下文压缩后的恢复锚点。此文件 + git 历史 + SDD 台账构成完整记录。
-> 更新:2026-11-09 · 版本 **0.2.5** · 分支 `build/wordpress-plugin`
+> 更新:2026-11-09 · 版本 **0.2.6** · 分支 `build/wordpress-plugin`
 
 ## 1. 项目
 
@@ -52,7 +52,7 @@ Chrome 扩展 Swarm Rebuild 的 WordPress 插件版:页面被擦成画布,一群
 
 **OPcache 冻结旧路径字节码**(validate_timestamps=0 类配置,面板重启无效,疑含文件缓存):**每次发版必须换新目录名** `swarm-rebuild-rN`(git archive --prefix),用户删旧装新。同路径重装无效。
 
-- 当前应部署:**`dist/swarm-rebuild-r11-0.2.5.zip`**(未交付;线上现为 r10-0.2.4,壁纸问题已确认解决)
+- 当前应部署:**`dist/swarm-rebuild-r12-0.2.6.zip`**(未交付;线上现为 r10-0.2.4,r11-0.2.5 用户未装)
 - 站点有 WP-Super-Cache(装后清缓存)与 DogeCloud CDN;删除插件触发 uninstall → **设置重置**(5 项需重配:范围/自动返回/声音/巡览/移动端)
 - 打包:`git archive --prefix=swarm-rebuild-rN/ -o dist/... HEAD`(tests 等已 export-ignore)
 
@@ -78,4 +78,5 @@ Chrome 扩展 Swarm Rebuild 的 WordPress 插件版:页面被擦成画布,一群
 | 0.2.2 | 完成后 0.5s 内退出画布(autoReturn 对手动重放也生效;卡片"关闭动画"保留优雅淡出) |
 | 0.2.3 | 修复自动播放竞速:keeper 检测挪到采集前一刻 |
 | 0.2.4 | 修复伪元素壁纸被连带隐藏(argon 源码+线上 CSS 取证),**用户确认解决** |
-| **0.2.5** | 壁纸兼容兜底设置:透明背景开关 + 壁纸元素选择器(off 模式与选择器分类均 harness 验证)(当前) |
+| 0.2.5 | 壁纸兼容兜底设置:透明背景开关 + 壁纸元素选择器(off 模式与选择器分类均 harness 验证) |
+| **0.2.6** | 设置页选择器帮助提示(可折叠+控制台片段)+ 作者改 Mondayice + 插件描述中文化(当前) |
