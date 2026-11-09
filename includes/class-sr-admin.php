@@ -78,7 +78,7 @@ if ( ! class_exists( 'SR_Admin' ) ) {
 				'auto_return'    => array(
 					'label'       => esc_html__( 'Return to the live page when finished', 'swarm-rebuild' ),
 					'type'        => 'checkbox',
-					'description' => esc_html__( 'The rebuild plays on every visit; finished links are clickable while it builds. When on, the page fades back to the live site a moment after the rebuild completes. When off, the rebuilt page stays until the visitor clicks a link or exits.', 'swarm-rebuild' ),
+					'description' => esc_html__( 'The rebuild plays on every visit; finished links are clickable while it builds. When on, the canvas exits back to the live page within half a second of the rebuild completing. When off, the rebuilt page stays until the visitor clicks a link or exits.', 'swarm-rebuild' ),
 				),
 				'sound_default'  => array(
 					'label'       => esc_html__( 'Sound on by default', 'swarm-rebuild' ),

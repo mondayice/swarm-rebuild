@@ -10,8 +10,9 @@
  *  - judgment chain: reduced-motion > visitor opt-out > play (every visit replays)
  *  - pre-erase over-limit precheck BEFORE the engine is ever loaded
  *  - lazy-inject the engine once, then drive it through window.SwarmRebuild
- *  - autoplay auto-returns to the live page after a 2.5s linger when the admin
- *    enabled auto-return; manual triggers and link clicks never auto-return
+ *  - when the admin enabled auto-return, EVERY finished run (auto or manual)
+ *    exits the canvas within ~0.5s of completion: a 0.2s beat, then the
+ *    engine's fast fade-out — the graceful "go live" fade stays for the card
  *  - Esc (or the card's close button while idle) stops auto-playing in this browser
  */
 
@@ -33,7 +34,9 @@ import { createEngineLoader } from './modules/engine-load.js';
   const prefs = createPrefs(window.localStorage);
   const engineLoader = createEngineLoader(document, cfg.engineUrl);
 
-  const AUTO_RETURN_LINGER = 2.5; // seconds the finished rebuild lingers before going live
+  // Finished-run exit budget: completion + 0.1s beat + engine's 0.26s fast
+  // fade ≈ canvas gone ~0.36s after the last task lands (spec: ≤0.5s).
+  const AUTO_EXIT_DELAY = 100;
 
   let currentTrigger = null; // 'auto' | 'manual' — set when a run starts
   let introTimer = null;
@@ -72,12 +75,14 @@ import { createEngineLoader } from './modules/engine-load.js';
       if (!completeHooked) {
         completeHooked = true;
         api.onComplete(() => {
-          if (currentTrigger === 'auto' && cfg.autoReturn !== false) {
+          if (cfg.autoReturn !== false) {
             clearTimeout(introTimer);
             introTimer = setTimeout(() => {
-              currentTrigger = null; // our own goLive must not read as a visitor exit
-              if (window.SwarmRebuild && window.SwarmRebuild.app) window.SwarmRebuild.goLive();
-            }, AUTO_RETURN_LINGER * 1000);
+              currentTrigger = null; // our own exit must not read as a visitor exit
+              // Fast canvas exit (≤0.5s after completion): the graceful
+              // goLive fade is reserved for the card's close button.
+              if (window.SwarmRebuild && window.SwarmRebuild.app) window.SwarmRebuild.stop(false);
+            }, AUTO_EXIT_DELAY);
           }
         });
       }
