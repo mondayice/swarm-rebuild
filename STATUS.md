@@ -63,6 +63,7 @@ Chrome 扩展 Swarm Rebuild 的 WordPress 插件版:页面被擦成画布,一群
 3. keepers 判定收窄为 canvas/img/video/svg(计划里的"带 background-image 无文字"分支因误伤风险未实现);sticky 未贴顶/内嵌滚动容器里的链接 layer 判定为启发式。
 4. 审查 deferred minors:activation-hook 占位、pot/readme 占位值、引擎 %d 译者注释。
 5. 声音卡片即时生效依赖引擎已加载(未加载时仅写 prefs,下次生效)——已按设计接受。
+6. **改设置后必须手动清页面缓存**:config JSON 随页面 HTML 一起被 WP-Super-Cache 等缓存,后台改设置(巡览/声音/自动返回等)不会自动刷新缓存——需管理栏"删除缓存",CDN 整页缓存还需 CDN 侧刷新(2026-11-10 实测踩坑:关巡览/声音后访客仍拿旧值;0.2.7 曾实现保存自动清缓存,按用户决定撤销,此人工流程为现行方案)。
 
 ## 7. 版本史
 
