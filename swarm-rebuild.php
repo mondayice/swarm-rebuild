@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Swarm Rebuild
  * Description:       Wipe the page to a blank canvas and let a swarm of multiplayer cursors rebuild it live — crosshair boxes, typed text, pen lines, ruler guides.
- * Version:           0.1.0
+ * Version:           0.1.1
  * Requires at least: 6.5
  * Requires PHP:      7.4
  * Author:            Swarm Rebuild contributors
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SWARM_REBUILD_VERSION', '0.1.0' );
+define( 'SWARM_REBUILD_VERSION', '0.1.1' );
 define( 'SWARM_REBUILD_FILE', __FILE__ );
 define( 'SWARM_REBUILD_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SWARM_REBUILD_URL', plugin_dir_url( __FILE__ ) );
