@@ -133,11 +133,18 @@ class FrontendTest extends TestCase {
 		$this->assertSame( SWARM_REBUILD_URL . 'assets/js/engine/swarm.js', $cfg['engineUrl'] );
 	}
 
-	public function test_build_config_strings_covers_all_15_keys() {
+	public function test_build_config_strings_covers_all_22_keys() {
 		$cfg      = SR_Frontend::build_config( $this->s, array( 'is_home' => true, 'path' => '/' ) );
-		$expected = array( 'tour', 'goLive', 'replay', 'tapForSound', 'soundOn', 'soundOff', 'exit', 'agentsReady', 'rebuiltIn', 'sizeBadge', 'cardReplay', 'cardClose', 'cardSound', 'cardHide', 'cardShow' );
+		$expected = array(
+			'tour', 'touring', 'ttTour', 'ttSpeed', 'ttSound', 'ttLive', 'ttReplay', 'ttExit',
+			'goLive', 'replay', 'exit', 'tapForSound', 'soundOn', 'soundOff',
+			'agentsReady', 'rebuiltIn', 'sizeBadge',
+			'cardReplay', 'cardClose', 'cardSound', 'cardHide', 'cardShow',
+		);
 		$this->assertSame( $expected, array_keys( $cfg['strings'] ) );
 		$this->assertSame( 'Go live', $cfg['strings']['goLive'] );
-		$this->assertSame( 'Rebuilt by %d agents in %ds', $cfg['strings']['rebuiltIn'] );
+		$this->assertSame( 'Rebuilt by <b>%d</b> agents in <b>%d</b>s', $cfg['strings']['rebuiltIn'] );
+		$this->assertSame( '<b>%d</b> agents ready', $cfg['strings']['agentsReady'] );
+		$this->assertSame( 'Auto-scroll while the swarm builds', $cfg['strings']['ttTour'] );
 	}
 }
