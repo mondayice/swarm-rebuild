@@ -99,15 +99,6 @@ if ( ! class_exists( 'SR_Admin' ) ) {
 					'type'        => 'checkbox',
 					'description' => esc_html__( 'Off by default: touch devices have no cursor metaphor.', 'swarm-rebuild' ),
 				),
-				'canvas_bg'      => array(
-					'label'   => esc_html__( 'Canvas background', 'swarm-rebuild' ),
-					'type'    => 'select',
-					'choices' => array(
-						'page'        => esc_html__( 'Follow page', 'swarm-rebuild' ),
-						'transparent' => esc_html__( 'Transparent (keep site background)', 'swarm-rebuild' ),
-						'white'       => esc_html__( 'Blank white', 'swarm-rebuild' ),
-					),
-				),
 				'intro_delay'    => array(
 					'label'       => esc_html__( 'Intro end delay (seconds)', 'swarm-rebuild' ),
 					'type'        => 'number',

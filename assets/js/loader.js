@@ -60,7 +60,6 @@ import { createEngineLoader } from './modules/engine-load.js';
     window.SwarmRebuildEngineConfig = {
       strings: cfg.strings || {},
       soundDefault: resolveSound(),
-      canvasBackground: cfg.canvasBackground || 'page',
     };
 
     engineLoader.load().then((ok) => {

@@ -193,13 +193,6 @@ class FrontendTest extends TestCase {
 		);
 	}
 
-	public function test_build_config_passes_canvas_background_mode() {
-		$cfg = SR_Frontend::build_config( $this->s, array( 'is_home' => true, 'path' => '/' ) );
-		$this->assertSame( 'page', $cfg['canvasBackground'] );
-		$cfg2 = SR_Frontend::build_config( array_merge( $this->s, array( 'canvas_bg' => 'transparent' ) ), array( 'is_home' => true, 'path' => '/' ) );
-		$this->assertSame( 'transparent', $cfg2['canvasBackground'] );
-	}
-
 	/* ---- shortcode detection (incl. builder meta, review I3) ---- */
 
 	public function test_detect_shortcode_in_post_content() {

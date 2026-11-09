@@ -183,7 +183,6 @@ if ( ! class_exists( 'SR_Frontend' ) ) {
 				'scopeActive'  => true,
 				'autoplay'     => $autoplay,
 				'autoplayMode' => $autoplay ? 'intro' : null,
-				'canvasBackground' => ( isset( $s['canvas_bg'] ) && in_array( $s['canvas_bg'], array( 'page', 'transparent', 'white' ), true ) ) ? $s['canvas_bg'] : 'page',
 				'hotkeyEnabled' => (bool) $s['hotkey_enabled'],
 				'cardEnabled'  => (bool) $s['card_enabled'],
 				'soundDefault' => (bool) $s['sound_default'],
