@@ -54,30 +54,6 @@ if ( ! class_exists( 'SR_Admin' ) ) {
 					array( 'field' => $field, 'key' => $id )
 				);
 			}
-
-			// The config JSON travels inside the page HTML: page caches serve the
-			// OLD settings until purged. Best-effort purge on every save.
-			add_action( 'update_option_' . SR_Settings::OPTION_KEY, array( __CLASS__, 'flush_page_cache' ) );
-			add_action( 'add_option_' . SR_Settings::OPTION_KEY, array( __CLASS__, 'flush_page_cache' ) );
-		}
-
-		/**
-		 * Best-effort purge of common full-page caches after a settings save.
-		 * The visitor-facing config JSON is baked into cached HTML, so without
-		 * this, changed settings (tour/sound/autoreturn…) keep showing the old
-		 * values to cached visitors.
-		 */
-		public static function flush_page_cache() {
-			if ( function_exists( 'wp_cache_clear_cache' ) ) { // WP Super Cache
-				wp_cache_clear_cache();
-			}
-			if ( function_exists( 'w3tc_flush_all' ) ) { // W3 Total Cache
-				w3tc_flush_all();
-			}
-			if ( function_exists( 'rocket_clean_domain' ) ) { // WP Rocket
-				rocket_clean_domain();
-			}
-			do_action( 'litespeed_purge_all' ); // LiteSpeed Cache (no-op if absent)
 		}
 
 		/**
@@ -134,7 +110,6 @@ if ( ! class_exists( 'SR_Admin' ) ) {
 
 		public static function render_section_intro() {
 			echo '<p>' . esc_html__( 'The rebuild plays automatically on every visit to pages in scope — finished elements become clickable while the swarm is still building. Visitors who dismissed the animation (Esc or the card) keep that choice in their browser.', 'swarm-rebuild' ) . '</p>';
-			echo '<p>' . esc_html__( 'Settings travel to visitors inside the page HTML: saving automatically purges common page caches (WP Super Cache, W3 Total Cache, WP Rocket, LiteSpeed). If a CDN caches full HTML on top of those, refresh it there as well.', 'swarm-rebuild' ) . '</p>';
 		}
 
 		public static function render_page() {
