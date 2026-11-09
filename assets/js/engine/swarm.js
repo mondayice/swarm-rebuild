@@ -3641,8 +3641,6 @@
     async run() {
       restoreContent(); // defensive: a leaked hidden page would empty the capture
       this.env = detectEnv();
-      this.keepers = findKeepers();
-      this.env.keepers = this.keepers;
       const shotP = this.loadShot();
       this.view = new View(this.env);
       this.engine = new Engine(this.view);
@@ -3677,6 +3675,13 @@
         const g = this.env.geom();
         shot.valid = Math.abs(g.sx - shot.sx) < 1 && Math.abs(g.sy - shot.sy) < 1;
       }
+      // Detect background keepers HERE, not at run start: themes usually create
+      // their wallpaper canvases from JS, and an auto-played run can start
+      // before those scripts ran (keepers=0 → opaque backdrop). By capture time
+      // the scan has walked the whole page and every theme script has executed,
+      // so fixed full-viewport canvases are all present and sized.
+      this.keepers = findKeepers();
+      this.env.keepers = this.keepers;
       let model;
       try {
         model = captureModel(this.env, shot);

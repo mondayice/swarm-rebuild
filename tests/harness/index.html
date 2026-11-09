@@ -22,7 +22,6 @@
 </style>
 </head>
 <body>
-  <canvas id="wallpaper"></canvas>
   <main>
     <header>
       <nav>
@@ -61,32 +60,39 @@
   </main>
 
 <script>
-  // Animated wallpaper so "still live" is visually distinguishable from a frozen clone.
+  // Animated wallpaper, created from JS ~400ms after parse — mimics themes
+  // (like Argon on mondayice.com) that inject their background canvases late.
+  // Reproduces the timing bug fixed in 0.2.3: keeper detection must happen at
+  // capture time, not at engine start.
   (function () {
-    var c = document.getElementById('wallpaper');
-    var ctx = c.getContext('2d');
-    function size() { c.width = innerWidth; c.height = innerHeight; }
-    addEventListener('resize', size); size();
-    var t = 0;
-    (function draw() {
-      t += 0.012;
-      var g = ctx.createLinearGradient(0, 0, c.width, c.height);
-      g.addColorStop(0, 'hsl(' + (140 + 20 * Math.sin(t)) + ',45%,32%)');
-      g.addColorStop(1, 'hsl(' + (180 + 20 * Math.cos(t)) + ',40%,22%)');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, c.width, c.height);
-      ctx.strokeStyle = 'rgba(255,255,255,.25)';
-      for (var i = 0; i < 24; i++) {
-        var x = (i * 97 + t * 60) % (c.width + 80) - 40;
-        var y = 60 + 36 * i + 18 * Math.sin(t + i);
-        if (y > c.height) continue;
-        ctx.beginPath();
-        ctx.moveTo(x - 24, y);
-        ctx.quadraticCurveTo(x, y - 18, x + 24, y);
-        ctx.stroke();
-      }
-      requestAnimationFrame(draw);
-    })();
+    setTimeout(function () {
+      var c = document.createElement('canvas');
+      c.id = 'wallpaper';
+      document.body.insertBefore(c, document.body.firstChild);
+      var ctx = c.getContext('2d');
+      function size() { c.width = innerWidth; c.height = innerHeight; }
+      addEventListener('resize', size); size();
+      var t = 0;
+      (function draw() {
+        t += 0.012;
+        var g = ctx.createLinearGradient(0, 0, c.width, c.height);
+        g.addColorStop(0, 'hsl(' + (140 + 20 * Math.sin(t)) + ',45%,32%)');
+        g.addColorStop(1, 'hsl(' + (180 + 20 * Math.cos(t)) + ',40%,22%)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.strokeStyle = 'rgba(255,255,255,.25)';
+        for (var i = 0; i < 24; i++) {
+          var x = (i * 97 + t * 60) % (c.width + 80) - 40;
+          var y = 60 + 36 * i + 18 * Math.sin(t + i);
+          if (y > c.height) continue;
+          ctx.beginPath();
+          ctx.moveTo(x - 24, y);
+          ctx.quadraticCurveTo(x, y - 18, x + 24, y);
+          ctx.stroke();
+        }
+        requestAnimationFrame(draw);
+      })();
+    }, 400);
   })();
 </script>
 </body>
