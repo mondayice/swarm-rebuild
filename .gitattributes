@@ -6,3 +6,4 @@
 /phpunit.phar export-ignore
 /dist export-ignore
 /.phpunit.result.cache export-ignore
+/STATUS.md export-ignore
