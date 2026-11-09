@@ -1,0 +1,8 @@
+# Distribution zip (scripts/package.sh uses git archive): dev-only files stay out.
+/tests export-ignore
+/phpunit.xml export-ignore
+/package.json export-ignore
+/scripts export-ignore
+/phpunit.phar export-ignore
+/dist export-ignore
+/.phpunit.result.cache export-ignore

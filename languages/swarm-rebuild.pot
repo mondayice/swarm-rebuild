@@ -1,0 +1,183 @@
+# Copyright (C) 2026 Swarm Rebuild contributors
+# This file is distributed under the GPL-2.0-or-later license.
+msgid ""
+msgstr ""
+"Project-Id-Version: Swarm Rebuild 0.1.0\n"
+"Report-Msgid-Bugs-To: https://example.com/swarm-rebuild/issues\n"
+"POT-Creation-Date: 2026-11-09 12:00+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: manual\n"
+"X-Domain: swarm-rebuild\n"
+
+#: includes/class-sr-admin.php
+msgid "Swarm Rebuild"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Swarm Rebuild Settings"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid ""
+"Choose where the swarm can run and how visitors experience it. Visitors who "
+"turned the animation off in their browser keep that choice."
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Where to enable"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Front page only"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Specific URLs"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Entire site"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid ""
+"One path per line (e.g. about or pricing). Used when \"Specific URLs\" is "
+"selected."
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Intro mode"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid ""
+"Auto-play the rebuild once per visitor on pages in scope. Skippable and "
+"respects reduced-motion."
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Visitor control card"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Floating card in the bottom-left corner with replay, stop and sound controls."
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Sound on by default"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Keyboard shortcut"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Alt+Shift+S triggers the rebuild on pages in scope."
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Enable on mobile"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Off by default: touch devices have no cursor metaphor."
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Intro end delay (seconds)"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid ""
+"How long the finished state lingers before auto-returning to the live page."
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Enabled"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Tour"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Touring"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Auto-scroll while the swarm builds"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Build speed"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Sound (M)"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Fade back to the real page"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Wipe and rebuild again"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Exit (Esc)"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Go live"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Replay"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Exit"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Tap for sound"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Sound on (M)"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Sound off (M)"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "<b>%d</b> agents ready"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Rebuilt by <b>%d</b> agents in <b>%d</b>s"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "%d × %d"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Close animation"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Sound"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Hide"
+msgstr ""
+
+#: includes/class-sr-frontend.php
+msgid "Show"
+msgstr ""

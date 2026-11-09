@@ -66,6 +66,10 @@ function wp_get_inline_script_tag( $code, $attrs = array() ) {
 	return '<script' . $pairs . '>' . $code . '</script>';
 }
 
+function __( $text, $domain = 'default' ) {
+	return $text;
+}
+
 if ( ! defined( 'SWARM_REBUILD_URL' ) ) {
 	define( 'SWARM_REBUILD_URL', 'https://example.com/wp-content/plugins/swarm-rebuild/' );
 }
