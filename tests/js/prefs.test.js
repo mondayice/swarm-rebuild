@@ -33,13 +33,13 @@ test('setters persist and getters read back', () => {
   assert.strictEqual(p.sound(), true);
 });
 
-test('clearing a flag removes the key', () => {
+test('clearing a flag stores an explicit off', () => {
   const s = memoryStorage();
   const p = createPrefs(s);
   p.setOptedOut(true);
   p.setOptedOut(false);
   assert.strictEqual(p.optedOut(), false);
-  assert.ok(s.touched.some(([op, k]) => op === 'remove' && k === 'srOptOut'));
+  assert.ok(s.touched.some(([op, k]) => op === 'set' && k === 'srOptOut'));
 });
 
 test('localStorage keys are the pinned site-wide names', () => {
@@ -51,6 +51,15 @@ test('localStorage keys are the pinned site-wide names', () => {
   p.setSound(true);
   const setKeys = s.touched.filter(([op]) => op === 'set').map(([, k]) => k);
   assert.deepStrictEqual(setKeys.sort(), ['srCardCollapsed', 'srIntroSeen', 'srOptOut', 'srSound'].sort());
+});
+
+test('hasSound distinguishes unset from explicitly set', () => {
+  const s = memoryStorage();
+  const p = createPrefs(s);
+  assert.strictEqual(p.hasSound(), false);
+  p.setSound(false);
+  assert.strictEqual(p.hasSound(), true);
+  assert.strictEqual(p.sound(), false);
 });
 
 test('a throwing storage (private mode) never breaks the caller', () => {

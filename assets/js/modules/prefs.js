@@ -17,13 +17,19 @@ function safeGet(storage, key) {
   }
 }
 
+function safeHas(storage, key) {
+  try {
+    return storage.getItem(key) !== null;
+  } catch {
+    return false;
+  }
+}
+
 function safeSet(storage, key, value) {
   try {
-    if (value) {
-      storage.setItem(key, '1');
-    } else {
-      storage.removeItem(key);
-    }
+    // Store explicit '1'/'0' so "off" stays distinguishable from "never set"
+    // (hasSound relies on that distinction to fall back to the admin default).
+    storage.setItem(key, value ? '1' : '0');
   } catch {
     /* private mode: preference simply doesn't persist */
   }
@@ -38,6 +44,7 @@ export function createPrefs(storage) {
     collapsed() { return safeGet(storage, KEY_COLLAPSED); },
     setCollapsed(value) { safeSet(storage, KEY_COLLAPSED, value); },
     sound() { return safeGet(storage, KEY_SOUND); },
+    hasSound() { return safeHas(storage, KEY_SOUND); },
     setSound(value) { safeSet(storage, KEY_SOUND, value); },
   };
 }

@@ -1,0 +1,95 @@
+/*
+ * Swarm Rebuild visitor card.
+ *
+ * Scoping choice: plain classnames under the #swarm-rebuild-card-host id
+ * instead of a shadow root — card.css is plugin-owned and enqueued the normal
+ * way, and the id prefix keeps specificity high against theme styles. Only the
+ * host-critical properties carry !important (position, z-index) so the card
+ * cannot be displaced from its corner or hidden under the engine overlay.
+ */
+
+#swarm-rebuild-card-host {
+  position: fixed !important;
+  left: 0;
+  bottom: 0;
+  z-index: 2147483647 !important; /* same as the engine overlay, appended later */
+  direction: ltr;
+  font: 12px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #fff;
+}
+
+#swarm-rebuild-card-host .sr-card {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin: 16px;
+  padding: 6px 8px;
+  background: rgba(20, 20, 22, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+#swarm-rebuild-card-host .sr-btn {
+  appearance: none;
+  border: 0;
+  border-radius: 6px;
+  padding: 5px 9px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#swarm-rebuild-card-host .sr-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+#swarm-rebuild-card-host .sr-btn:focus-visible {
+  outline: 2px solid #7ab8ff;
+  outline-offset: 1px;
+}
+
+#swarm-rebuild-card-host .sr-btn-quiet {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+#swarm-rebuild-card-host .sr-btn.sr-on {
+  background: rgba(122, 184, 255, 0.22);
+}
+
+#swarm-rebuild-card-host .sr-btn.sr-done {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Collapsed: the card disappears and a narrow handle stays on the left edge. */
+
+#swarm-rebuild-card-host .sr-handle {
+  display: none;
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
+  writing-mode: vertical-rl;
+  padding: 10px 5px;
+  background: rgba(20, 20, 22, 0.92);
+  color: rgba(255, 255, 255, 0.75);
+  font: inherit;
+  cursor: pointer;
+}
+
+#swarm-rebuild-card-host.sr-collapsed .sr-card {
+  display: none;
+}
+
+#swarm-rebuild-card-host.sr-collapsed .sr-handle {
+  display: block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #swarm-rebuild-card-host .sr-btn,
+  #swarm-rebuild-card-host .sr-handle {
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+}
