@@ -1,7 +1,7 @@
 # Swarm Rebuild for WordPress — 状态快照
 
 > 用途:上下文压缩后的恢复锚点。此文件 + git 历史 + SDD 台账构成完整记录。
-> 更新:2026-11-09 · 版本 **0.2.3** · 分支 `build/wordpress-plugin`
+> 更新:2026-11-09 · 版本 **0.2.4** · 分支 `build/wordpress-plugin`
 
 ## 1. 项目
 
@@ -20,7 +20,7 @@ Chrome 扩展 Swarm Rebuild 的 WordPress 插件版:页面被擦成画布,一群
 |---|---|
 | 每次都播 | 打开范围内页面即触发(0.2.0 删除"整站首访一次");判定链 reduced-motion > 访客关闭 > 播放 |
 | **绘制完即可点击** | 可见 `a[href]`(剔 javascript:)采集为交互区;walk 挂标 + **inline 链接几何兜底**(纯 inline 链接会并入 text run,walk 不可达,按矩形相交找重叠 items 的任务作 deps);任务全 done → 代理 `<a>` 淡入点亮(`pointer-events:auto`),点击:外链 `stop(false)+location.href`、`_blank` 同手势 `window.open`、`#锚点` `stop(true)` 淡回后 scrollIntoView;上限 400;点链接不算 opt-out |
-| **背景透出(修复版)** | **采集时**(0.2.3:自动播放竞速主题 JS 晚建画布→改在 captureModel 前一刻检测,scan 已走完全页)找 keepers(fixed+≥95% 视口+canvas/img/video/svg,上限 8)→ walk 跳过其子树(不重绘不隐藏)→ **采集之后**才隐藏内容(0.1.2 根因:先隐藏→capture 跳过 hidden→0 层)→ `.bg` 淡出透出活背景;无 keepers(普通站点)自动退回 0.1.1 行为;恢复点三处冗余:run 开头/destroy/restart |
+| **背景透出(修复版)** | **采集时**(0.2.3:自动播放竞速主题 JS 晚建画布→改在 captureModel 前一刻检测,scan 已走完全页)找 keepers(fixed+≥95% 视口+canvas/img/video/svg,上限 8)+ **伪元素壁纸 keeper**(0.2.4:mondayice 真实壁纸 = `#content::before{position:fixed;background:url(qzm89d.webp)}` 自定义 CSS 伪元素层,非画布;检测 = 遍历常见容器标签的 ::before/::after 计算样式,fixed+全 inset+url/gradient 背景,上限 4)→ walk 跳过 keeper 子树且跳过伪 keeper 的 emitPseudoBox(不重绘壁纸);hideContent 隐藏伪 keeper 元素时打 `data-sr-keep-pseudo` 标 + 注入覆盖样式表 `[data-sr-keep-pseudo]::before,::after{visibility:visible!important}` 保住壁纸伪元素,restoreContent 幂等清除→ **采集之后**才隐藏内容(0.1.2 根因:先隐藏→capture 跳过 hidden→0 层)→ `.bg` 淡出透出活背景;无 keeper 且无伪 keeper(普通站点)自动退回 0.1.1 行为;恢复点三处冗余:run 开头/destroy/restart |
 | 设置(5 项) | 生效范围(首页/URL/整站+列表)、结束后自动回到真实页面(默认开;完成后 ~0.36s 快速退场=100ms 节拍+引擎 260ms 淡出,全部运行生效;关=停留在可点击重建页)、默认开启声音、**默认开启巡览**(0.2.1,`tour_default`;经 config→`ENGINE_CFG.tourDefault`→引擎,访客卡片仍可每轮切)、在移动端启用;6 键 `scope/scope_urls/auto_return/sound_default/tour_default/mobile_enabled`,旧键 sanitize 直接丢弃 |
 | 卡片=唯一控制面 | 左下角,重放/关闭动画(播放中=跳回真实页,空闲=本浏览器不再自动播)/声音(**运行中即时生效** `setSound`+prefs)/巡览(`setTour`,每轮默认开,run 开始同步状态)/收起到左缘;数组驱动模板可扩展 |
 | HUD 仅状态条 | 引擎 HUD 六按钮全部移除;保留 光标头像/进度/"N agents · d/t layers"/"N 位光标用时 X 秒";Esc=退出+M=切声音保留 |
@@ -52,7 +52,7 @@ Chrome 扩展 Swarm Rebuild 的 WordPress 插件版:页面被擦成画布,一群
 
 **OPcache 冻结旧路径字节码**(validate_timestamps=0 类配置,面板重启无效,疑含文件缓存):**每次发版必须换新目录名** `swarm-rebuild-rN`(git archive --prefix),用户删旧装新。同路径重装无效。
 
-- 当前应部署:**`dist/swarm-rebuild-r9-0.2.3.zip`**(未交付;线上现为 r8-0.2.2)
+- 当前应部署:**`dist/swarm-rebuild-r10-0.2.4.zip`**(未交付;线上现为 r9-0.2.3)
 - 站点有 WP-Super-Cache(装后清缓存)与 DogeCloud CDN;删除插件触发 uninstall → **设置重置**(5 项需重配:范围/自动返回/声音/巡览/移动端)
 - 打包:`git archive --prefix=swarm-rebuild-rN/ -o dist/... HEAD`(tests 等已 export-ignore)
 
@@ -76,4 +76,5 @@ Chrome 扩展 Swarm Rebuild 的 WordPress 插件版:页面被擦成画布,一群
 | 0.2.0 | 产品重定位:每次都播+绘制完可点击+背景透出(修复版)+设置精简+卡片唯一控制面(线上已验证) |
 | 0.2.1 | 修复动画内重绘"第二张卡"+ 巡览默认开关入后台 |
 | 0.2.2 | 完成后 0.5s 内退出画布(autoReturn 对手动重放也生效;卡片"关闭动画"保留优雅淡出) |
-| **0.2.3** | 修复自动播放竞速:keeper 检测挪到采集前一刻(harness 画布改 JS 动态创建复现主题时序)(当前) |
+| 0.2.3 | 修复自动播放竞速:keeper 检测挪到采集前一刻 |
+| **0.2.4** | 修复伪元素壁纸被连带隐藏(argon 源码+线上 CSS 取证:#content::before 模式);harness 加伪壁纸层+截屏验证(当前) |
