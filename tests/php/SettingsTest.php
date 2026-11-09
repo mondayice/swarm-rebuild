@@ -14,6 +14,7 @@ class SettingsTest extends TestCase {
 			'scope_urls'     => array(),
 			'auto_return'    => true,
 			'sound_default'  => true,
+			'tour_default'   => true,
 			'mobile_enabled' => false,
 		);
 		$this->assertSame( $expected, SR_Settings::defaults() );
@@ -64,10 +65,12 @@ class SettingsTest extends TestCase {
 		$in = array(
 			'auto_return'   => '1',
 			'sound_default' => '1',
+			'tour_default'  => '1',
 		);
 		$out = SR_Settings::sanitize( $in );
 		$this->assertTrue( $out['auto_return'] );
 		$this->assertTrue( $out['sound_default'] );
+		$this->assertTrue( $out['tour_default'] );
 		$this->assertFalse( $out['mobile_enabled'] ); // absent → false
 	}
 
@@ -81,7 +84,7 @@ class SettingsTest extends TestCase {
 			'intro_delay'    => '4',
 		);
 		$out = SR_Settings::sanitize( $in );
-		$this->assertSame( array( 'scope', 'scope_urls', 'auto_return', 'sound_default', 'mobile_enabled' ), array_keys( $out ) );
+		$this->assertSame( array( 'scope', 'scope_urls', 'auto_return', 'sound_default', 'tour_default', 'mobile_enabled' ), array_keys( $out ) );
 	}
 
 	public function test_sanitize_output_key_set_equals_defaults_key_set() {

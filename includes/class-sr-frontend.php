@@ -184,6 +184,7 @@ if ( ! class_exists( 'SR_Frontend' ) ) {
 				'autoplay'    => self::is_in_scope( $s, $ctx['path'], $ctx['is_home'] ) || ! empty( $ctx['shortcode_active'] ),
 				'autoReturn'  => (bool) $s['auto_return'],
 				'soundDefault' => (bool) $s['sound_default'],
+				'tourDefault' => (bool) $s['tour_default'],
 				'engineUrl'   => add_query_arg( 'ver', SWARM_REBUILD_VERSION, SWARM_REBUILD_URL . 'assets/js/engine/swarm.js' ),
 				'strings'     => array(
 					// Engine status strip.

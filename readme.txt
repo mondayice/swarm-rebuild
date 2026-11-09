@@ -4,7 +4,7 @@ Tags: animation, intro, cursor, effects
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.2.0
+Stable tag: 0.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,6 +56,10 @@ Mobile is disabled by default (Settings → Swarm Rebuild) because touch devices
 Shortcodes inside Elementor widgets are detected (builder data is scanned). If you use another page builder that stores content elsewhere, place the shortcode in a regular content block.
 
 == Changelog ==
+
+= 0.2.1 =
+* Fixed: the swarm no longer rebuilds a ghost copy of the visitor card inside the animation (the "two cards" effect while scrolling during a run).
+* New setting: "Tour on by default" — choose whether auto-scroll follows the build; visitors can still pause it on the card.
 
 = 0.2.0 =
 * Simplified to the product goal: the rebuild replays on every visit (no intro-mode toggle, no once-per-visitor rule).

@@ -149,11 +149,12 @@ class FrontendTest extends TestCase {
 	}
 
 	public function test_build_config_passes_through_settings_and_engine_url() {
-		$s    = array_merge( $this->s, array( 'auto_return' => false, 'sound_default' => false ) );
+		$s    = array_merge( $this->s, array( 'auto_return' => false, 'sound_default' => false, 'tour_default' => false ) );
 		$cfg  = SR_Frontend::build_config( $s, array( 'is_home' => true, 'path' => '/' ) );
 		$this->assertTrue( $cfg['scopeActive'] );
 		$this->assertFalse( $cfg['autoReturn'] );
 		$this->assertFalse( $cfg['soundDefault'] );
+		$this->assertFalse( $cfg['tourDefault'] );
 		$this->assertSame(
 			SWARM_REBUILD_URL . 'assets/js/engine/swarm.js?ver=' . SWARM_REBUILD_VERSION,
 			$cfg['engineUrl']

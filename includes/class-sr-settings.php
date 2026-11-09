@@ -26,6 +26,7 @@ if ( ! class_exists( 'SR_Settings' ) ) {
 				'scope_urls'     => array(),
 				'auto_return'    => true,
 				'sound_default'  => true,
+				'tour_default'   => true,
 				'mobile_enabled' => false,
 			);
 		}
@@ -81,6 +82,7 @@ if ( ! class_exists( 'SR_Settings' ) ) {
 				'scope_urls'     => $urls,
 				'auto_return'    => (bool) ( $input['auto_return'] ?? false ),
 				'sound_default'  => (bool) ( $input['sound_default'] ?? false ),
+				'tour_default'   => (bool) ( $input['tour_default'] ?? false ),
 				'mobile_enabled' => (bool) ( $input['mobile_enabled'] ?? false ),
 			);
 		}

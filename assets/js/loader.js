@@ -40,7 +40,7 @@ import { createEngineLoader } from './modules/engine-load.js';
   let cardHost = null; // set once the visitor card exists
   let completeHooked = false; // engine completion callback registers once, not per run
   let soundOn = prefs.hasSound() ? prefs.sound() : !!cfg.soundDefault;
-  let tourOn = true; // mirrored from api.app.tour while a run is active
+  let tourOn = cfg.tourDefault !== false; // admin default until a run mirrors the live state
 
   const reducedMotion = () =>
     window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -62,6 +62,7 @@ import { createEngineLoader } from './modules/engine-load.js';
     window.SwarmRebuildEngineConfig = {
       strings: cfg.strings || {},
       soundDefault: soundOn,
+      tourDefault: cfg.tourDefault !== false,
     };
 
     engineLoader.load().then((ok) => {

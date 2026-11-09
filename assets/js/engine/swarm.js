@@ -1045,6 +1045,9 @@
       if (items.length >= MAX_ITEMS) return;
       const tag = el.localName;
       if (SKIP.has(tag) || el === env.host) return;
+      // Our own visitor card is plugin UI, not page content: never capture it
+      // (otherwise the swarm rebuilds a ghost copy of the card mid-animation).
+      if (el.id === "swarm-rebuild-card-host") return;
       // Background keepers (0.2.0): fixed full-viewport media stays live — it is
       // neither hidden nor rebuilt; the swarm draws content on top of it.
       if (env.keepers && env.keepers.has(el)) return;
@@ -1428,7 +1431,7 @@
       const seen = new Set(links.map((L) => L.el));
       for (const el of document.querySelectorAll("a[href]")) {
         if (links.length >= 400) break;
-        if (seen.has(el) || el.closest("script,style,noscript")) continue;
+        if (seen.has(el) || el.closest("script,style,noscript") || el.closest("#swarm-rebuild-card-host")) continue;
         const raw = el.getAttribute("href");
         if (!raw || /^\s*javascript:/i.test(raw)) continue;
         const cs = getComputedStyle(el);
@@ -3607,9 +3610,9 @@
     constructor() {
       this.dead = false;
       this.t0 = performance.now();
-      // Tour (auto-scroll following the build) defaults ON; the HUD button
-      // toggles it per run.
-      this.tour = true;
+      // Tour (auto-scroll following the build) defaults to the admin setting
+      // delivered through the engine config; the visitor card toggles per run.
+      this.tour = ENGINE_CFG.tourDefault !== false;
       this.tourV = 0;
       this.tourAcc = 0;
       this.speeds = [1, 2, 3];

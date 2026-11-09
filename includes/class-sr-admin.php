@@ -83,7 +83,12 @@ if ( ! class_exists( 'SR_Admin' ) ) {
 				'sound_default'  => array(
 					'label'       => esc_html__( 'Sound on by default', 'swarm-rebuild' ),
 					'type'        => 'checkbox',
-					'description' => esc_html__( 'Visitors can mute on the floating card; the choice sticks in their browser.', 'swarm-rebuild' ),
+					'description' => esc_html__( 'Visitors can mute on the card; the choice sticks in their browser.', 'swarm-rebuild' ),
+				),
+				'tour_default'   => array(
+					'label'       => esc_html__( 'Tour on by default', 'swarm-rebuild' ),
+					'type'        => 'checkbox',
+					'description' => esc_html__( 'Auto-scroll follows the swarm while it builds. Visitors can pause it on the card.', 'swarm-rebuild' ),
 				),
 				'mobile_enabled' => array(
 					'label'       => esc_html__( 'Enable on mobile', 'swarm-rebuild' ),
