@@ -3476,7 +3476,9 @@
     constructor() {
       this.dead = false;
       this.t0 = performance.now();
-      this.tour = false;
+      // Tour (auto-scroll following the build) defaults ON; the HUD button
+      // toggles it per run.
+      this.tour = true;
       this.tourV = 0;
       this.tourAcc = 0;
       this.speeds = [1, 2, 3];
@@ -3517,6 +3519,13 @@
       this.raf = requestAnimationFrame((t) => this.frame(t));
       await nextFrame();
       this.renderSoundBtn();
+      if (this.tour) {
+        const tb = this.view.root.querySelector('[data-a="tour"]');
+        if (tb) {
+          tb.classList.add("on");
+          tb.textContent = t("touring", "Touring");
+        }
+      }
       this.sfx.intro();
       this.view.bg.classList.add("on");
       this.view.intro.classList.add("on");
