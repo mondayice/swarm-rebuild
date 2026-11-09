@@ -51,6 +51,19 @@ class SettingsTest extends TestCase {
 		$this->assertSame( array( 'about', 'contact', 'pricing' ), $out['scope_urls'] );
 	}
 
+	/**
+	 * The Settings API delivers the textarea as a newline-separated STRING,
+	 * not an array — the real form shape, not the internal shape (review C1).
+	 */
+	public function test_sanitize_accepts_scope_urls_as_textarea_string() {
+		$in = array(
+			'scope'      => 'urls',
+			'scope_urls' => " /about/ \r\nhttps://example.com/contact/\n\n/pricing",
+		);
+		$out = SR_Settings::sanitize( $in );
+		$this->assertSame( array( 'about', 'contact', 'pricing' ), $out['scope_urls'] );
+	}
+
 	public function test_sanitize_casts_booleans_and_missing_flags_to_false() {
 		$in = array(
 			'intro_enabled'  => '1',

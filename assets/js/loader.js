@@ -32,6 +32,8 @@ import { createEngineLoader } from './modules/engine-load.js';
 
   let currentTrigger = null; // 'auto' | 'manual' — set when a run starts
   let introTimer = null;
+  let cardHost = null; // set once the visitor card exists
+  let completeHooked = false; // engine completion callback registers once, not per run
   let soundOn = prefs.hasSound() ? prefs.sound() : !!cfg.soundDefault;
 
   const reducedMotion = () =>
@@ -64,17 +66,25 @@ import { createEngineLoader } from './modules/engine-load.js';
       if (!ok || !window.SwarmRebuild) return;
       const api = window.SwarmRebuild;
 
-      api.onComplete(() => {
-        if (currentTrigger === 'auto') {
-          introTimer = setTimeout(() => {
-            if (window.SwarmRebuild && window.SwarmRebuild.app) window.SwarmRebuild.goLive();
-          }, Math.max(0.5, cfg.introDelay || 2.5) * 1000);
-        }
-      });
+      if (!completeHooked) {
+        completeHooked = true;
+        api.onComplete(() => {
+          if (currentTrigger === 'auto') {
+            clearTimeout(introTimer);
+            introTimer = setTimeout(() => {
+              if (window.SwarmRebuild && window.SwarmRebuild.app) window.SwarmRebuild.goLive();
+            }, Math.max(0.5, cfg.introDelay || 2.5) * 1000);
+          }
+        });
+      }
 
       if (api.app) api.stop(false); // finished state → replay re-wipes
       currentTrigger = trigger;
       api.start();
+      // The engine overlay (appended to <html>, max z-index, pointer-events on)
+      // would cover the card: re-append the card host to <html> AFTER start so
+      // tree order puts the card on top for this run (review C2).
+      if (cardHost) document.documentElement.appendChild(cardHost);
       if (trigger === 'auto') prefs.markSeen();
     });
     return true;
@@ -134,6 +144,7 @@ import { createEngineLoader } from './modules/engine-load.js';
 
   const strings = cfg.strings || {};
   const host = document.createElement('div');
+  cardHost = host;
   host.id = 'swarm-rebuild-card-host';
   if (prefs.collapsed()) host.classList.add('sr-collapsed');
   host.innerHTML = [
@@ -148,6 +159,9 @@ import { createEngineLoader } from './modules/engine-load.js';
   document.body.appendChild(host);
 
   const soundBtn = host.querySelector('[data-sr="sound"]');
+  // v1: the toggle governs runs from the NEXT page load (the engine captures
+  // its sound default once, at injection). During a run, the HUD's M key rules.
+  if (strings.cardSoundHint) soundBtn.title = strings.cardSoundHint;
   const syncSound = () => soundBtn.classList.toggle('sr-on', soundOn);
   syncSound();
 

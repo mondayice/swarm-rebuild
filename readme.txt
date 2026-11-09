@@ -46,6 +46,14 @@ Their choice is stored in their browser (localStorage). Clearing site data in th
 
 Mobile is disabled by default (Settings → Swarm Rebuild) because touch devices have no cursor metaphor. You can enable it.
 
+= I toggled sound on the card but the running animation kept playing sounds. =
+
+The card toggle governs runs from the next page load; during a run, use the sound button (M) in the animation's own bar.
+
+= I put the shortcode in an Elementor Shortcode widget and nothing happens? =
+
+Shortcodes inside Elementor widgets are detected (builder data is scanned). If you use another page builder that stores content elsewhere, place the shortcode in a regular content block.
+
 == Changelog ==
 
 = 0.1.0 =

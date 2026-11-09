@@ -9,6 +9,7 @@ class FrontendTest extends TestCase {
 	protected function setUp(): void {
 		$GLOBALS['__sr_options']        = array();
 		$GLOBALS['__sr_registered_tag'] = null;
+		$GLOBALS['__sr_post_meta']      = array();
 		$this->s = SR_Settings::defaults();
 	}
 
@@ -130,21 +131,63 @@ class FrontendTest extends TestCase {
 		$this->assertFalse( $cfg['hotkeyEnabled'] );
 		$this->assertTrue( $cfg['cardEnabled'] );
 		$this->assertFalse( $cfg['soundDefault'] );
-		$this->assertSame( SWARM_REBUILD_URL . 'assets/js/engine/swarm.js', $cfg['engineUrl'] );
+		$this->assertSame(
+			SWARM_REBUILD_URL . 'assets/js/engine/swarm.js?ver=' . SWARM_REBUILD_VERSION,
+			$cfg['engineUrl']
+		);
 	}
 
-	public function test_build_config_strings_covers_all_22_keys() {
+	public function test_build_config_strings_covers_all_23_keys() {
 		$cfg      = SR_Frontend::build_config( $this->s, array( 'is_home' => true, 'path' => '/' ) );
 		$expected = array(
 			'tour', 'touring', 'ttTour', 'ttSpeed', 'ttSound', 'ttLive', 'ttReplay', 'ttExit',
 			'goLive', 'replay', 'exit', 'tapForSound', 'soundOn', 'soundOff',
 			'agentsReady', 'rebuiltIn', 'sizeBadge',
-			'cardReplay', 'cardClose', 'cardSound', 'cardHide', 'cardShow',
+			'cardReplay', 'cardClose', 'cardSound', 'cardSoundHint', 'cardHide', 'cardShow',
 		);
 		$this->assertSame( $expected, array_keys( $cfg['strings'] ) );
 		$this->assertSame( 'Go live', $cfg['strings']['goLive'] );
 		$this->assertSame( 'Rebuilt by <b>%d</b> agents in <b>%d</b>s', $cfg['strings']['rebuiltIn'] );
 		$this->assertSame( '<b>%d</b> agents ready', $cfg['strings']['agentsReady'] );
 		$this->assertSame( 'Auto-scroll while the swarm builds', $cfg['strings']['ttTour'] );
+	}
+
+	/**
+	 * Review I4: the engine URL carries the plugin version so a cached loader
+	 * after an update never pairs with a stale engine URL.
+	 */
+	public function test_build_config_engine_url_is_versioned() {
+		$cfg = SR_Frontend::build_config( $this->s, array( 'is_home' => true, 'path' => '/' ) );
+		$this->assertSame(
+			SWARM_REBUILD_URL . 'assets/js/engine/swarm.js?ver=' . SWARM_REBUILD_VERSION,
+			$cfg['engineUrl']
+		);
+	}
+
+	/* ---- shortcode detection (incl. builder meta, review I3) ---- */
+
+	public function test_detect_shortcode_in_post_content() {
+		$post          = new stdClass();
+		$post->ID      = 7;
+		$post->post_content = 'Hello [swarm_rebuild autoplay="true"] world';
+		$this->assertTrue( SR_Frontend::detect_shortcode( $post ) );
+	}
+
+	public function test_detect_shortcode_in_elementor_meta() {
+		$GLOBALS['__sr_post_meta'] = array(
+			7 => array( '_elementor_data' => array( '[{"shortcode":"[swarm_rebuild]"}]' ) ),
+		);
+		$post          = new stdClass();
+		$post->ID      = 7;
+		$post->post_content = '';
+		$this->assertTrue( SR_Frontend::detect_shortcode( $post ) );
+	}
+
+	public function test_detect_shortcode_absent_everywhere() {
+		$GLOBALS['__sr_post_meta'] = array();
+		$post          = new stdClass();
+		$post->ID      = 8;
+		$post->post_content = 'Just content, no tag.';
+		$this->assertFalse( SR_Frontend::detect_shortcode( $post ) );
 	}
 }

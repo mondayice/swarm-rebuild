@@ -57,23 +57,40 @@ if ( ! class_exists( 'SR_Frontend' ) ) {
 		}
 
 		/**
-		 * Runtime context for gating. Shortcode presence in the main queried
-		 * post's content (sidebars/widgets are not scanned — known limitation).
+		 * Runtime context for gating. Shortcode detection covers the main
+		 * post's content and page-builder meta (Elementor stores widgets in
+		 * post meta, not content); sidebars/widgets outside the main query are
+		 * not scanned — known limitation.
 		 *
 		 * @return array{is_home: bool, path: string, ua: string, shortcode_active: bool}
 		 */
 		private static function current_ctx() {
 			$post = get_post();
-			$shortcode_active = false;
-			if ( $post instanceof WP_Post && has_shortcode( $post->post_content, self::SHORTCODE_TAG ) ) {
-				$shortcode_active = true;
-			}
 			return array(
 				'is_home'          => is_front_page() || is_home(),
 				'path'             => (string) parse_url( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/', PHP_URL_PATH ),
 				'ua'               => isset( $_SERVER['HTTP_USER_AGENT'] ) ? $_SERVER['HTTP_USER_AGENT'] : '',
-				'shortcode_active' => $shortcode_active,
+				'shortcode_active' => $post ? self::detect_shortcode( $post ) : false,
 			);
+		}
+
+		/**
+		 * Shortcode presence for a post: its content, or page-builder meta
+		 * (Elementor keeps shortcode widgets in _elementor_data while
+		 * post_content stays empty).
+		 *
+		 * @param object $post Post-ish object with ID and post_content.
+		 * @return bool
+		 */
+		public static function detect_shortcode( $post ) {
+			if ( ! is_object( $post ) || ! isset( $post->post_content ) ) {
+				return false;
+			}
+			if ( has_shortcode( $post->post_content, self::SHORTCODE_TAG ) ) {
+				return true;
+			}
+			$builder_meta = get_post_meta( $post->ID, '_elementor_data', true );
+			return is_string( $builder_meta ) && false !== strpos( $builder_meta, '[' . self::SHORTCODE_TAG );
 		}
 
 		/**
@@ -166,7 +183,7 @@ if ( ! class_exists( 'SR_Frontend' ) ) {
 				'cardEnabled'  => (bool) $s['card_enabled'],
 				'soundDefault' => (bool) $s['sound_default'],
 				'introDelay'   => (float) $s['intro_delay'],
-				'engineUrl'    => SWARM_REBUILD_URL . 'assets/js/engine/swarm.js',
+				'engineUrl'    => add_query_arg( 'ver', SWARM_REBUILD_VERSION, SWARM_REBUILD_URL . 'assets/js/engine/swarm.js' ),
 				'strings'      => array(
 					'tour'        => __( 'Tour', 'swarm-rebuild' ),
 					'touring'     => __( 'Touring', 'swarm-rebuild' ),
@@ -188,6 +205,7 @@ if ( ! class_exists( 'SR_Frontend' ) ) {
 					'cardReplay'  => __( 'Replay', 'swarm-rebuild' ),
 					'cardClose'   => __( 'Close animation', 'swarm-rebuild' ),
 					'cardSound'   => __( 'Sound', 'swarm-rebuild' ),
+					'cardSoundHint' => __( 'Applies from the next page load; press M during the animation.', 'swarm-rebuild' ),
 					'cardHide'    => __( 'Hide', 'swarm-rebuild' ),
 					'cardShow'    => __( 'Show', 'swarm-rebuild' ),
 				),

@@ -175,6 +175,10 @@ msgid "Sound"
 msgstr ""
 
 #: includes/class-sr-frontend.php
+msgid "Applies from the next page load; press M during the animation."
+msgstr ""
+
+#: includes/class-sr-frontend.php
 msgid "Hide"
 msgstr ""
 

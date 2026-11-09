@@ -50,6 +50,12 @@ if ( ! class_exists( 'SR_Settings' ) ) {
 				return $defaults;
 			}
 
+			// The scope_urls field is a textarea: the Settings API delivers it
+			// as a newline-separated string, not an array.
+			if ( isset( $input['scope_urls'] ) && is_string( $input['scope_urls'] ) ) {
+				$input['scope_urls'] = preg_split( '/\r\n|\r|\n/', $input['scope_urls'] );
+			}
+
 			$scope = ( isset( $input['scope'] ) && in_array( $input['scope'], array( 'home', 'urls', 'site' ), true ) )
 				? $input['scope']
 				: $defaults['scope'];

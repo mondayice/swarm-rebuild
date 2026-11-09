@@ -70,6 +70,19 @@ function __( $text, $domain = 'default' ) {
 	return $text;
 }
 
+function add_query_arg( $key, $value, $url ) {
+	return $url . ( strpos( $url, '?' ) === false ? '?' : '&' ) . $key . '=' . rawurlencode( $value );
+}
+
+function has_shortcode( $content, $tag ) {
+	return false !== strpos( (string) $content, '[' . $tag );
+}
+
+function get_post_meta( $post_id, $key, $single = false ) {
+	$meta = isset( $GLOBALS['__sr_post_meta'][ $post_id ][ $key ] ) ? $GLOBALS['__sr_post_meta'][ $post_id ][ $key ] : array();
+	return $single ? ( isset( $meta[0] ) ? $meta[0] : '' ) : $meta;
+}
+
 if ( ! defined( 'SWARM_REBUILD_URL' ) ) {
 	define( 'SWARM_REBUILD_URL', 'https://example.com/wp-content/plugins/swarm-rebuild/' );
 }
