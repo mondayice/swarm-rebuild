@@ -4,7 +4,7 @@ Tags: animation, intro, cursor, effects
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.2.4
+Stable tag: 0.2.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,6 +56,9 @@ Mobile is disabled by default (Settings → Swarm Rebuild) because touch devices
 Shortcodes inside Elementor widgets are detected (builder data is scanned). If you use another page builder that stores content elsewhere, place the shortcode in a regular content block.
 
 == Changelog ==
+
+= 0.2.5 =
+* New settings for wallpaper compatibility: "Transparent backdrop" (on/off — off always uses a solid-color wipe, the safe mode for exotic themes) and "Wallpaper elements (CSS selectors)", a manual fallback list for wallpapers the automatic detection misses. Selector-matched elements are classified automatically: media elements or elements with their own background image stay fully visible; anything else keeps its pseudo-element background layers visible.
 
 = 0.2.4 =
 * Fixed: wallpapers implemented as CSS pseudo-element background layers (`#content::before { position:fixed; background:url(...) }`, the Argon-theme pattern) were hidden along with the content during the animation. Such layers are now detected, kept visible under the transparent backdrop, and excluded from the rebuild.

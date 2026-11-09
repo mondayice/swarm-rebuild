@@ -90,6 +90,16 @@ if ( ! class_exists( 'SR_Admin' ) ) {
 					'type'        => 'checkbox',
 					'description' => esc_html__( 'Auto-scroll follows the swarm while it builds. Visitors can pause it on the card.', 'swarm-rebuild' ),
 				),
+				'transparent_backdrop' => array(
+					'label'       => esc_html__( 'Transparent backdrop', 'swarm-rebuild' ),
+					'type'        => 'checkbox',
+					'description' => esc_html__( 'Detect the site wallpaper (fixed canvas/video/image or pseudo-element background layers) and keep it visible during the animation. Turning this off always uses a solid-color wipe — the safe mode if the wallpaper misbehaves on your theme.', 'swarm-rebuild' ),
+				),
+				'wallpaper_selectors'  => array(
+					'label'       => esc_html__( 'Wallpaper elements (CSS selectors)', 'swarm-rebuild' ),
+					'type'        => 'textarea',
+					'description' => esc_html__( 'One CSS selector per line, e.g. #content or .site-bg. Manual fallback for wallpapers the automatic detection misses; elements are kept visible during the animation. Only used while the transparent backdrop is on.', 'swarm-rebuild' ),
+				),
 				'mobile_enabled' => array(
 					'label'       => esc_html__( 'Enable on mobile', 'swarm-rebuild' ),
 					'type'        => 'checkbox',

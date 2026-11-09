@@ -185,6 +185,8 @@ if ( ! class_exists( 'SR_Frontend' ) ) {
 				'autoReturn'  => (bool) $s['auto_return'],
 				'soundDefault' => (bool) $s['sound_default'],
 				'tourDefault' => (bool) $s['tour_default'],
+				'backdrop'    => empty( $s['transparent_backdrop'] ) ? 'off' : 'auto',
+				'wallpaperSelectors' => array_values( (array) $s['wallpaper_selectors'] ),
 				'engineUrl'   => add_query_arg( 'ver', SWARM_REBUILD_VERSION, SWARM_REBUILD_URL . 'assets/js/engine/swarm.js' ),
 				'strings'     => array(
 					// Engine status strip.

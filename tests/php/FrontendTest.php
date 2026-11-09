@@ -149,16 +149,24 @@ class FrontendTest extends TestCase {
 	}
 
 	public function test_build_config_passes_through_settings_and_engine_url() {
-		$s    = array_merge( $this->s, array( 'auto_return' => false, 'sound_default' => false, 'tour_default' => false ) );
+		$s    = array_merge( $this->s, array( 'auto_return' => false, 'sound_default' => false, 'tour_default' => false, 'wallpaper_selectors' => array( '#content' ) ) );
 		$cfg  = SR_Frontend::build_config( $s, array( 'is_home' => true, 'path' => '/' ) );
 		$this->assertTrue( $cfg['scopeActive'] );
 		$this->assertFalse( $cfg['autoReturn'] );
 		$this->assertFalse( $cfg['soundDefault'] );
 		$this->assertFalse( $cfg['tourDefault'] );
+		$this->assertSame( 'auto', $cfg['backdrop'] );
+		$this->assertSame( array( '#content' ), $cfg['wallpaperSelectors'] );
 		$this->assertSame(
 			SWARM_REBUILD_URL . 'assets/js/engine/swarm.js?ver=' . SWARM_REBUILD_VERSION,
 			$cfg['engineUrl']
 		);
+	}
+
+	public function test_build_config_backdrop_off_when_transparent_disabled() {
+		$s   = array_merge( $this->s, array( 'transparent_backdrop' => false ) );
+		$cfg = SR_Frontend::build_config( $s, array( 'is_home' => true, 'path' => '/' ) );
+		$this->assertSame( 'off', $cfg['backdrop'] );
 	}
 
 	public function test_build_config_strings_covers_all_14_keys() {

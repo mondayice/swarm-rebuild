@@ -2,8 +2,8 @@
 # This file is distributed under the GPL-2.0-or-later license.
 msgid ""
 msgstr ""
-"Project-Id-Version: Swarm Rebuild 0.2.3\n"
-"POT-Creation-Date: 2026-11-10 00:10+0800\n"
+"Project-Id-Version: Swarm Rebuild 0.2.5\n"
+"POT-Creation-Date: 2026-11-10 10:30+0800\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -64,6 +64,27 @@ msgstr ""
 
 msgid "Auto-scroll follows the swarm while it builds. Visitors can pause it on the card."
 msgstr ""
+
+msgid "Transparent backdrop"
+msgstr ""
+
+msgid ""
+"Detect the site wallpaper (fixed canvas/video/image or pseudo-element "
+"background layers) and keep it visible during the animation. Turning this "
+"off always uses a solid-color wipe — the safe mode if the wallpaper "
+"misbehaves on your theme."
+msgstr ""
+"自动检测站点壁纸(fixed 定位的画布/视频/图片或伪元素背景层)并在动画中保持可见。关闭后始终使用实色擦除——当你的主题壁纸表现异常时选这个安全模式。"
+
+msgid "Wallpaper elements (CSS selectors)"
+msgstr ""
+
+msgid ""
+"One CSS selector per line, e.g. #content or .site-bg. Manual fallback for "
+"wallpapers the automatic detection misses; elements are kept visible during "
+"the animation. Only used while the transparent backdrop is on."
+msgstr ""
+"每行一个 CSS 选择器,如 #content 或 .site-bg。为自动检测遗漏的壁纸提供手动兜底;这些元素在动画中将保持可见。仅在透明背景模式开启时生效。"
 
 msgid "Enable on mobile"
 msgstr ""

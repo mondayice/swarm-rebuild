@@ -68,6 +68,27 @@ msgstr "默认开启巡览"
 msgid "Auto-scroll follows the swarm while it builds. Visitors can pause it on the card."
 msgstr "随群体构建自动滚动页面;访客可在悬浮卡片上暂停。"
 
+msgid "Transparent backdrop"
+msgstr "透明背景模式"
+
+msgid ""
+"Detect the site wallpaper (fixed canvas/video/image or pseudo-element "
+"background layers) and keep it visible during the animation. Turning this "
+"off always uses a solid-color wipe — the safe mode if the wallpaper "
+"misbehaves on your theme."
+msgstr ""
+"自动检测站点壁纸(fixed 定位的画布/视频/图片或伪元素背景层)并在动画中保持可见。关闭后始终使用实色擦除——当你的主题壁纸表现异常时选这个安全模式。"
+
+msgid "Wallpaper elements (CSS selectors)"
+msgstr "壁纸元素(CSS 选择器)"
+
+msgid ""
+"One CSS selector per line, e.g. #content or .site-bg. Manual fallback for "
+"wallpapers the automatic detection misses; elements are kept visible during "
+"the animation. Only used while the transparent backdrop is on."
+msgstr ""
+"每行一个 CSS 选择器,如 #content 或 .site-bg。为自动检测遗漏的壁纸提供手动兜底;这些元素在动画中将保持可见。仅在透明背景模式开启时生效。"
+
 msgid "Enable on mobile"
 msgstr "在移动端启用"
 

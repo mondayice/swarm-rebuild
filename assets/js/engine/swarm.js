@@ -3683,10 +3683,18 @@
       // before those scripts ran (keepers=0 → opaque backdrop). By capture time
       // the scan has walked the whole page and every theme script has executed,
       // so fixed full-viewport canvases are all present and sized. Pseudo-layer
-      // wallpapers (#content::before et al) are detected alongside.
-      this.keepers = findKeepers();
+      // wallpapers (#content::before et al) are detected alongside. The admin's
+      // "transparent backdrop = off" switches to the always-opaque safe mode;
+      // wallpaper selectors add manual keeper entries on top of the auto ones.
+      if (ENGINE_CFG.backdrop === "off") {
+        this.keepers = new Set();
+        this.pseudoKeepers = new Set();
+      } else {
+        this.keepers = findKeepers();
+        this.pseudoKeepers = findPseudoKeepers();
+        applyWallpaperSelectors(this.keepers, this.pseudoKeepers);
+      }
       this.env.keepers = this.keepers;
-      this.pseudoKeepers = findPseudoKeepers();
       this.env.pseudoKeepers = this.pseudoKeepers;
       let model;
       try {
@@ -4002,6 +4010,46 @@
       }
     }
     return out;
+  }
+
+  // Manual fallback (0.2.5): admin-listed CSS selectors add wallpaper keepers
+  // on top of the automatic detection. Each matched element is classified:
+  // media element, full-media wrapper, or element with its own background
+  // image → full keeper (subtree stays visible, never rebuilt); anything else
+  // (e.g. #content, whose wallpaper lives on its ::before) → pseudo keeper
+  // (element hidden, pseudos re-shown). Invalid selectors are skipped.
+  function applyWallpaperSelectors(keepers, pseudoKeepers) {
+    const sels = (ENGINE_CFG.wallpaperSelectors || []).slice(0, 5);
+    const mediaCovering = (el) => {
+      const m = el.querySelector && el.querySelector("canvas, img, video, svg");
+      if (!m) return false;
+      const mr = m.getBoundingClientRect();
+      const er = el.getBoundingClientRect();
+      return mr.width >= er.width * 0.8 && mr.height >= er.height * 0.8;
+    };
+    for (const sel of sels) {
+      let list;
+      try {
+        list = document.querySelectorAll(sel);
+      } catch (_) {
+        continue; // invalid selector: ignore
+      }
+      for (const el of list) {
+        if (el === document.documentElement || el === document.body) continue;
+        if (keepers.has(el) || pseudoKeepers.has(el)) continue;
+        let selfBg = "";
+        try {
+          selfBg = getComputedStyle(el).backgroundImage;
+        } catch (_) {}
+        const hasBg = !!selfBg && (selfBg.indexOf("url(") !== -1 || selfBg.indexOf("gradient(") !== -1);
+        if (["canvas", "img", "video", "svg"].includes(el.localName) || hasBg || mediaCovering(el)) {
+          keepers.add(el);
+        } else {
+          pseudoKeepers.add(el);
+        }
+        if (keepers.size + pseudoKeepers.size >= 16) return;
+      }
+    }
   }
 
   // Elements whose inline visibility we set, with the previous value to restore.

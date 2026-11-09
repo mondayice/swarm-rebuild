@@ -66,6 +66,8 @@ import { createEngineLoader } from './modules/engine-load.js';
       strings: cfg.strings || {},
       soundDefault: soundOn,
       tourDefault: cfg.tourDefault !== false,
+      backdrop: cfg.backdrop === 'off' ? 'off' : 'auto',
+      wallpaperSelectors: Array.isArray(cfg.wallpaperSelectors) ? cfg.wallpaperSelectors : [],
     };
 
     engineLoader.load().then((ok) => {

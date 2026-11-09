@@ -10,12 +10,14 @@ class SettingsTest extends TestCase {
 
 	public function test_defaults_returns_verbatim_keys_and_values() {
 		$expected = array(
-			'scope'          => 'home',
-			'scope_urls'     => array(),
-			'auto_return'    => true,
-			'sound_default'  => true,
-			'tour_default'   => true,
-			'mobile_enabled' => false,
+			'scope'                => 'home',
+			'scope_urls'           => array(),
+			'auto_return'          => true,
+			'sound_default'        => true,
+			'tour_default'         => true,
+			'transparent_backdrop' => true,
+			'wallpaper_selectors'  => array(),
+			'mobile_enabled'       => false,
 		);
 		$this->assertSame( $expected, SR_Settings::defaults() );
 	}
@@ -63,15 +65,30 @@ class SettingsTest extends TestCase {
 
 	public function test_sanitize_casts_booleans_and_missing_flags_to_false() {
 		$in = array(
-			'auto_return'   => '1',
-			'sound_default' => '1',
-			'tour_default'  => '1',
+			'auto_return'          => '1',
+			'sound_default'        => '1',
+			'tour_default'         => '1',
+			'transparent_backdrop' => '1',
 		);
 		$out = SR_Settings::sanitize( $in );
 		$this->assertTrue( $out['auto_return'] );
 		$this->assertTrue( $out['sound_default'] );
 		$this->assertTrue( $out['tour_default'] );
+		$this->assertTrue( $out['transparent_backdrop'] );
 		$this->assertFalse( $out['mobile_enabled'] ); // absent → false
+	}
+
+	public function test_sanitize_accepts_wallpaper_selectors_as_textarea_string() {
+		$in = array(
+			'wallpaper_selectors' => " #content \r\n<script>.evil</script>.site-bg\n\n.body-bg\r\n#one\r\n#two\r\n#three\r\n#four\r\n#five\r\n#six",
+		);
+		$out = SR_Settings::sanitize( $in );
+		$this->assertSame( array( '#content', '.site-bg', '.body-bg', '#one', '#two' ), $out['wallpaper_selectors'] );
+	}
+
+	public function test_sanitize_caps_wallpaper_selectors_length_and_drops_empty() {
+		$out = SR_Settings::sanitize( array( 'wallpaper_selectors' => array( '  ', str_repeat( 'a', 300 ) ) ) );
+		$this->assertSame( array( str_repeat( 'a', 200 ) ), $out['wallpaper_selectors'] );
 	}
 
 	public function test_sanitize_drops_legacy_keys_from_older_versions() {
@@ -84,7 +101,7 @@ class SettingsTest extends TestCase {
 			'intro_delay'    => '4',
 		);
 		$out = SR_Settings::sanitize( $in );
-		$this->assertSame( array( 'scope', 'scope_urls', 'auto_return', 'sound_default', 'tour_default', 'mobile_enabled' ), array_keys( $out ) );
+		$this->assertSame( array( 'scope', 'scope_urls', 'auto_return', 'sound_default', 'tour_default', 'transparent_backdrop', 'wallpaper_selectors', 'mobile_enabled' ), array_keys( $out ) );
 	}
 
 	public function test_sanitize_output_key_set_equals_defaults_key_set() {
