@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name:       Swarm Rebuild
- * Description:       Wipe the page to a blank canvas and let a swarm of multiplayer cursors rebuild it live — rebuilt links are clickable while the swarm builds, and the site background stays visible throughout.
- * Version:           0.2.5
+ * Description:       把页面擦成空白画布,一群多人光标实时将其重建——重建过程中已完成的链接即可点击跳转,站点壁纸全程可见。
+ * Version:           0.2.6
  * Requires at least: 6.5
  * Requires PHP:      7.4
- * Author:            Swarm Rebuild contributors
+ * Author:            Mondayice
  * License:           GPL-2.0-or-later
  * Text Domain:       swarm-rebuild
  */
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SWARM_REBUILD_VERSION', '0.2.5' );
+define( 'SWARM_REBUILD_VERSION', '0.2.6' );
 define( 'SWARM_REBUILD_FILE', __FILE__ );
 define( 'SWARM_REBUILD_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SWARM_REBUILD_URL', plugin_dir_url( __FILE__ ) );

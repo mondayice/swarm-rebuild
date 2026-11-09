@@ -1,5 +1,5 @@
 # Chinese (China) translation of Swarm Rebuild.
-# Copyright (C) 2026 Swarm Rebuild contributors
+# Copyright (C) 2026 Mondayice
 # This file is distributed under the GPL-2.0-or-later license.
 msgid ""
 msgstr ""
@@ -88,6 +88,33 @@ msgid ""
 "the animation. Only used while the transparent backdrop is on."
 msgstr ""
 "每行一个 CSS 选择器,如 #content 或 .site-bg。为自动检测遗漏的壁纸提供手动兜底;这些元素在动画中将保持可见。仅在透明背景模式开启时生效。"
+
+msgid "How do I find the selector?"
+msgstr "如何找到选择器?"
+
+msgid ""
+"Examples: #content (Argon-style pseudo-element wallpapers), .site-bg "
+"(dedicated background div), #background-video (video wallpaper wrapper), "
+"canvas.wallpaper (class-named fullscreen canvas)."
+msgstr ""
+"示例:#content(Argon 类伪元素壁纸)、.site-bg(专用背景 div)、#background-video(视频壁纸"
+"外层容器)、canvas.wallpaper(带类名的全屏画布)。"
+
+msgid ""
+"Find it: open your site, press F12, pick the inspector arrow and click the "
+"wallpaper — the highlighted element's id or first class is your selector. If "
+"it cannot be clicked (pseudo-element layers), paste the snippet below into "
+"the browser console to list candidates, then fill one per line."
+msgstr ""
+"查找方法:打开你的站点按 F12,用左上角检查箭头点击壁纸区域——高亮元素的 id 或第一个 class 就是"
+"选择器。点不到的(伪元素图层)把下方片段贴进浏览器控制台列出候选,再逐行填入。"
+
+msgid ""
+"Do not list plain content containers that carry no wallpaper (harmless but "
+"useless). If a theme still misbehaves, turn off \"Transparent backdrop\" — it "
+"always uses a safe solid-color wipe."
+msgstr ""
+"不要填写不含壁纸的普通内容容器(无害但无意义)。如果主题仍然异常,关闭“透明背景模式”——它始终使用安全的实色擦除。"
 
 msgid "Enable on mobile"
 msgstr "在移动端启用"

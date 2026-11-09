@@ -170,6 +170,29 @@ if ( ! class_exists( 'SR_Admin' ) ) {
 			if ( ! empty( $field['description'] ) ) {
 				echo '<p class="description">' . esc_html( $field['description'] ) . '</p>';
 			}
+
+			if ( 'wallpaper_selectors' === $key ) {
+				self::render_selector_hint();
+			}
+		}
+
+		/**
+		 * Collapsible help for the wallpaper-selectors field: examples, how to
+		 * find the selector, and a console snippet that lists candidates.
+		 */
+		private static function render_selector_hint() {
+			$snippet = '[...document.querySelectorAll(\'body *\')].filter(el => {' . "\n"
+				. '  const cs = getComputedStyle(el), r = el.getBoundingClientRect();' . "\n"
+				. '  return cs.position === \'fixed\' && r.width >= innerWidth * .9 && r.height >= innerHeight * .9' . "\n"
+				. '    && cs.backgroundImage !== \'none\' || [\'CANVAS\',\'IMG\',\'VIDEO\'].includes(el.tagName) && cs.position === \'fixed\';' . "\n"
+				. '}).map(el => (el.id ? \'#\' + el.id : \'.\' + String(el.className).split(\' \')[0]) + \'  <\' + el.tagName + \'>\')';
+			echo '<details class="sr-selector-hint" style="margin-top:6px">';
+			echo '<summary style="cursor:pointer">' . esc_html__( 'How do I find the selector?', 'swarm-rebuild' ) . '</summary>';
+			echo '<p class="description">' . esc_html( __( 'Examples: #content (Argon-style pseudo-element wallpapers), .site-bg (dedicated background div), #background-video (video wallpaper wrapper), canvas.wallpaper (class-named fullscreen canvas).', 'swarm-rebuild' ) ) . '</p>';
+			echo '<p class="description">' . esc_html( __( 'Find it: open your site, press F12, pick the inspector arrow and click the wallpaper — the highlighted element\'s id or first class is your selector. If it cannot be clicked (pseudo-element layers), paste the snippet below into the browser console to list candidates, then fill one per line.', 'swarm-rebuild' ) ) . '</p>';
+			echo '<p><code style="display:block;white-space:pre;padding:8px;background:#f6f7f7;max-width:640px;overflow-x:auto">' . esc_html( $snippet ) . '</code></p>';
+			echo '<p class="description">' . esc_html( __( 'Do not list plain content containers that carry no wallpaper (harmless but useless). If a theme still misbehaves, turn off "Transparent backdrop" — it always uses a safe solid-color wipe.', 'swarm-rebuild' ) ) . '</p>';
+			echo '</details>';
 		}
 	}
 }
