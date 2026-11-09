@@ -27,6 +27,8 @@ The real DOM is never replaced — the rebuild is an overlay, so your content an
 
 The motion design and animation engine are adapted from **Swarm** by Joel Califa (https://joelcalifa.com, https://califa.github.io/swarm-site/), published at https://github.com/califa/swarm-site. Adaptation status: permission request pending — this plugin will not be submitted to the WordPress.org directory until written permission is recorded here.
 
+Additional thanks to the **Swarm Rebuild** Chrome extension ([DhvanilPatel/swarm-cursors](https://github.com/DhvanilPatel/swarm-cursors)) — this plugin is a WordPress port of that extension, which in turn is a tribute to Joel Califa's original Swarm site.
+
 == Installation ==
 
 1. Upload the `swarm-rebuild` folder to `/wp-content/plugins/`, or install the zip via Plugins → Add New → Upload.
