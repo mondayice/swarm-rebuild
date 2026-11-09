@@ -4,7 +4,7 @@ Tags: animation, intro, cursor, effects
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.2.6
+Stable tag: 0.2.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,6 +56,9 @@ Mobile is disabled by default (Settings → Swarm Rebuild) because touch devices
 Shortcodes inside Elementor widgets are detected (builder data is scanned). If you use another page builder that stores content elsewhere, place the shortcode in a regular content block.
 
 == Changelog ==
+
+= 0.2.7 =
+* Fixed: settings (tour/sound/auto-return…) reach visitors inside the cached page HTML, so changed settings kept showing old values to cached visitors. Saving now automatically purges common page caches (WP Super Cache, W3 Total Cache, WP Rocket, LiteSpeed); the settings page notes that CDN-cached HTML needs a CDN-side refresh too.
 
 = 0.2.6 =
 * Settings page: a collapsible "How do I find the selector?" help next to the wallpaper-elements field, with examples and a console snippet that lists wallpaper candidates.
