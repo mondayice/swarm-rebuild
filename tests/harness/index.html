@@ -5,12 +5,19 @@
 <title>Swarm Rebuild harness — background + links</title>
 <style>
   html, body { margin: 0; padding: 0; background: rgb(228, 237, 235); font: 16px/1.7 system-ui, sans-serif; }
-  /* Simulated site wallpaper: a fixed full-viewport animated canvas (like the
-     4 canvases on mondayice.com). Must stay live during the animation. */
+  /* Simulated site wallpaper, mondayice.com style: a CSS pseudo-element layer
+     (fixed, full viewport, z-index negative) carrying the actual background —
+     plus an interaction-driven canvas on top. Both must stay live. */
+  main::before {
+    content: '';
+    display: block;
+    position: fixed;
+    left: 0; right: 0; top: 0; bottom: 0;
+    z-index: -1;
+    background: linear-gradient(135deg, #3a1c71, #d76d77 55%, #ffaf7b);
+  }
   #wallpaper {
     position: fixed; inset: 0; z-index: 0;
-    /* forest-ish gradient fallback under the canvas paint */
-    background: linear-gradient(160deg, #14e, #4a7);
   }
   main { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 48px 24px 400px; }
   header nav a { margin-right: 16px; font-weight: 600; }
@@ -75,12 +82,8 @@
       var t = 0;
       (function draw() {
         t += 0.012;
-        var g = ctx.createLinearGradient(0, 0, c.width, c.height);
-        g.addColorStop(0, 'hsl(' + (140 + 20 * Math.sin(t)) + ',45%,32%)');
-        g.addColorStop(1, 'hsl(' + (180 + 20 * Math.cos(t)) + ',40%,22%)');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, c.width, c.height);
-        ctx.strokeStyle = 'rgba(255,255,255,.25)';
+        ctx.clearRect(0, 0, c.width, c.height); // transparent: the pseudo wallpaper shows beneath
+        ctx.strokeStyle = 'rgba(255,255,255,.5)';
         for (var i = 0; i < 24; i++) {
           var x = (i * 97 + t * 60) % (c.width + 80) - 40;
           var y = 60 + 36 * i + 18 * Math.sin(t + i);

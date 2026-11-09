@@ -1217,9 +1217,12 @@
         return;
       }
       // (text leaves carry their pseudos inside the clone instead)
-      if (emit && visible) emitPseudoBox(el, cs, r, pctx, "::before", emptyEl);
+      // Pseudo wallpaper layers are kept live under the overlay; the swarm
+      // must not rebuild them (a rect item can't reproduce a bg image).
+      const skipPseudos = env.pseudoKeepers && env.pseudoKeepers.has(el);
+      if (!skipPseudos && emit && visible) emitPseudoBox(el, cs, r, pctx, "::before", emptyEl);
       const afterPseudo = () => {
-        if (emit && visible) emitPseudoBox(el, cs, r, pctx, "::after", emptyEl);
+        if (!skipPseudos && emit && visible) emitPseudoBox(el, cs, r, pctx, "::after", emptyEl);
       };
 
       let run = [];
@@ -3679,9 +3682,12 @@
       // their wallpaper canvases from JS, and an auto-played run can start
       // before those scripts ran (keepers=0 → opaque backdrop). By capture time
       // the scan has walked the whole page and every theme script has executed,
-      // so fixed full-viewport canvases are all present and sized.
+      // so fixed full-viewport canvases are all present and sized. Pseudo-layer
+      // wallpapers (#content::before et al) are detected alongside.
       this.keepers = findKeepers();
       this.env.keepers = this.keepers;
+      this.pseudoKeepers = findPseudoKeepers();
+      this.env.pseudoKeepers = this.pseudoKeepers;
       let model;
       try {
         model = captureModel(this.env, shot);
@@ -3694,7 +3700,7 @@
       // Transparent mode: only now (capture already ran on the live DOM) hide
       // the real content — keepers stay visible — and fade the painted backdrop
       // so the live background shows through (0.1.2's bug was hiding earlier).
-      if (this.keepers.size) {
+      if (this.keepers.size || this.pseudoKeepers.size) {
         hideContent(this.keepers, this.env);
         this.view.revealBackdrop();
       }
@@ -3958,12 +3964,58 @@
     return out;
   }
 
+  // Pseudo-element wallpaper layers: elements whose ::before/::after is a
+  // fixed full-inset CSS background image (common "wallpaper" pattern, e.g.
+  // `#content::before { position:fixed; background:url(...) }`). Pseudos are
+  // not DOM elements, so keeper detection must read the pseudo computed style
+  // and the wallpaper must be kept visible across the content hide.
+  function findPseudoKeepers() {
+    const out = new Set();
+    if (!document.body) return out;
+    const candidates = [document.documentElement, document.body];
+    const all = document.body.getElementsByTagName("*");
+    const TAGS = { DIV: 1, SECTION: 1, MAIN: 1, ARTICLE: 1, HEADER: 1, FOOTER: 1, ASIDE: 1, NAV: 1 };
+    for (let i = 0; i < all.length && i < 3000; i++) {
+      if (TAGS[all[i].tagName]) candidates.push(all[i]);
+    }
+    for (const el of candidates) {
+      if (out.size >= 4) break;
+      for (const which of ["::before", "::after"]) {
+        let ps;
+        try {
+          ps = getComputedStyle(el, which);
+        } catch (_) {
+          continue;
+        }
+        if (!ps || ps.position !== "fixed") continue;
+        const bi = ps.backgroundImage;
+        if (!bi || (bi.indexOf("url(") === -1 && bi.indexOf("gradient(") === -1)) continue;
+        const n = (v) => parseFloat(v);
+        const insetOk =
+          (isNaN(n(ps.left)) || n(ps.left) <= 1) &&
+          (isNaN(n(ps.top)) || n(ps.top) <= 1) &&
+          (isNaN(n(ps.right)) || n(ps.right) <= 1) &&
+          (isNaN(n(ps.bottom)) || n(ps.bottom) <= 1);
+        if (!insetOk) continue;
+        out.add(el);
+        break;
+      }
+    }
+    return out;
+  }
+
   // Elements whose inline visibility we set, with the previous value to restore.
   let hiddenContent = [];
+  let pseudoKeepStyle = null;
 
   function restoreContent() {
     for (const [el, prev] of hiddenContent) el.style.visibility = prev;
     hiddenContent = [];
+    for (const el of document.querySelectorAll("[data-sr-keep-pseudo]")) el.removeAttribute("data-sr-keep-pseudo");
+    if (pseudoKeepStyle) {
+      pseudoKeepStyle.remove();
+      pseudoKeepStyle = null;
+    }
   }
 
   // Hide every maximal subtree that contains no keeper; recurse only along
@@ -3992,6 +4044,24 @@
       }
     };
     hideFrom(document.documentElement);
+    // Pseudo-element wallpapers (e.g. `#content::before { position:fixed;
+    // background:url(...) }`): hiding the element hides its pseudo too, which
+    // took the site's wallpaper with it. Re-show just those pseudos.
+    if (env.pseudoKeepers && env.pseudoKeepers.size) {
+      let tagged = 0;
+      for (const el of env.pseudoKeepers) {
+        if (el.style.visibility === "hidden") {
+          el.setAttribute("data-sr-keep-pseudo", "1");
+          tagged++;
+        }
+      }
+      if (tagged && !pseudoKeepStyle) {
+        pseudoKeepStyle = document.createElement("style");
+        pseudoKeepStyle.id = "swarm-rebuild-pseudo-keep";
+        pseudoKeepStyle.textContent = "[data-sr-keep-pseudo]::before,[data-sr-keep-pseudo]::after{visibility:visible !important}";
+        document.head.appendChild(pseudoKeepStyle);
+      }
+    }
   }
 
   let app = null;
