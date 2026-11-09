@@ -537,6 +537,18 @@
       if (r.left >= clip.l - 0.5 && r.top >= clip.t - 0.5 && r.right <= clip.r + 0.5 && r.bottom <= clip.b + 0.5) return null;
       return convClip(clip, layer);
     };
+
+    // Interactive zones (0.2.0): live <a href> elements get an overlay proxy
+    // that turns clickable once every task rebuilding that zone is done.
+    const links = [];
+    let curLink = null;
+    const makeLink = (el, r, layer) => {
+      const raw = el.getAttribute("href");
+      if (!raw || /^\s*javascript:/i.test(raw)) return null;
+      const L = { id: links.length, el, href: el.href, target: el.target || "", layer, box: conv(r, layer), items: [], deps: [], on: false, proxy: null };
+      links.push(L);
+      return L;
+    };
     const inDoc = (b, layer) =>
       layer === "world"
         ? b.x + b.w > 0 && b.x < docW && b.y + b.h > 0 && b.y < docH
@@ -552,6 +564,7 @@
       it.scale = 1;
       it.mode = "own";
       items.push(it);
+      if (curLink) curLink.items.push(it);
       return it;
     }
 
@@ -1032,6 +1045,12 @@
       if (items.length >= MAX_ITEMS) return;
       const tag = el.localName;
       if (SKIP.has(tag) || el === env.host) return;
+      // Background keepers (0.2.0): fixed full-viewport media stays live — it is
+      // neither hidden nor rebuilt; the swarm draws content on top of it.
+      if (env.keepers && env.keepers.has(el)) return;
+      // Reset the active interactive zone from the inherited context so a
+      // previous sibling's own link can never leak into this element.
+      curLink = ctx.act || null;
       const cs = css(el);
       const disp = cs.display;
       if (disp === "none") return;
@@ -1100,6 +1119,12 @@
       const sized = r.width >= 1 && r.height >= 1;
       const emit = visible && sized && !!intersect(ltrb(r), clip) && inDoc(box, layer);
 
+      // Entering a visible link makes it the active zone for this element and
+      // everything inside it (nested <a> is invalid HTML; innermost never wins).
+      if (!curLink && emit && tag === "a" && links.length < 400 && r.width >= 2 && r.height >= 2) {
+        curLink = makeLink(el, r, layer);
+      }
+
       const node = {
         el, tag, cls: (el.getAttribute && el.getAttribute("class")) || "", layer,
         start: items.length, end: items.length, kids: [], box,
@@ -1138,7 +1163,7 @@
         }
       }
       const blend = cs.mixBlendMode !== "normal" ? cs.mixBlendMode : ctx.blend;
-      const kctx = { op, layer: kidLayer, clip: kidClip, zTop, posd, boxItem, key: keyFn, blend };
+      const kctx = { op, layer: kidLayer, clip: kidClip, zTop, posd, boxItem, key: keyFn, blend, act: curLink };
 
       // Decide: one text leaf, or a mix of text runs and nested blocks.
       // Closed <details> and content-visibility:hidden still report real boxes for
@@ -1384,6 +1409,51 @@
     for (const t of tasks) t.gate = t.y;
     for (let i = tasks.length - 1; i >= 0; i--) for (const d of tasks[i].deps) if (tasks[i].gate < d.gate) d.gate = tasks[i].gate;
 
+    // A link's proxy activates when every task that rebuilds its zone is done.
+    // Twins share the master's finals, group copies carry their own dup task.
+    const linkDeps = (L) => {
+      const deps = new Set();
+      for (const it of L.items) {
+        if (it.task) deps.add(it.task);
+        else if (it.final) for (const x of it.final) deps.add(x);
+        else if (it.copyOf && it.copyOf.task) deps.add(it.copyOf.task);
+      }
+      return deps;
+    };
+
+    // Geometric fallback: pure-inline links (nav menus, prose) get merged into
+    // text runs and are never walked as elements — register them from the live
+    // DOM instead and gate on the items their rectangle overlaps.
+    if (links.length < 400) {
+      const seen = new Set(links.map((L) => L.el));
+      for (const el of document.querySelectorAll("a[href]")) {
+        if (links.length >= 400) break;
+        if (seen.has(el) || el.closest("script,style,noscript")) continue;
+        const raw = el.getAttribute("href");
+        if (!raw || /^\s*javascript:/i.test(raw)) continue;
+        const cs = getComputedStyle(el);
+        if (cs.display === "none" || cs.visibility !== "visible" || parseFloat(cs.opacity) < 0.05) continue;
+        const rr = el.getBoundingClientRect();
+        if (rr.width < 2 || rr.height < 2) continue;
+        let layer;
+        if (cs.position === "fixed") layer = "over";
+        else if (env.isRoot) layer = "world";
+        else layer = el !== env.scroller && env.scroller.contains(el) ? "world" : "under";
+        const box = conv(rr, layer);
+        if (!inDoc(box, layer)) continue;
+        const L = { id: links.length, el, href: el.href, target: el.target || "", layer, box, items: [], deps: [], on: false, proxy: null };
+        const li = { l: box.x, t: box.y, r: box.x + box.w, b: box.y + box.h };
+        for (const it of items) {
+          if (it.layer !== layer) continue;
+          const ib = it.kind === "text" ? it.tb : it;
+          if (ib.x + (ib.w || 0) <= li.l || ib.x >= li.r || ib.y + (ib.h || 0) <= li.t || ib.y >= li.b) continue;
+          L.items.push(it);
+        }
+        links.push(L);
+      }
+    }
+    for (const L of links) L.deps = [...linkDeps(L)];
+
     // A sticky header that is transparent at the top of the page still needs
     // something behind it once content scrolls underneath (sites add it on scroll).
     const backdrops = [];
@@ -1396,7 +1466,7 @@
         if (!covered) backdrops.push({ x: b.r.left, y: b.r.top, w: b.r.width, h: b.r.height, key: b.key, color: pageBg.color });
       }
 
-    return { items, tasks, groups, guides, docW, docH, backdrops, portKey };
+    return { items, tasks, groups, guides, links, docW, docH, backdrops, portKey };
   }
 
   // -------------------------------------------------------------- text reveal
@@ -1517,6 +1587,10 @@
 .caret{display:inline-block;width:1.5px;height:1.1em;margin-left:1px;margin-right:-2.5px;vertical-align:text-bottom;background:currentColor;animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
 .sa{background-color:rgba(13,153,255,.28)!important}
+.acts{position:absolute;inset:0;pointer-events:none}
+.act{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;opacity:0;transition:opacity .45s ease;border-radius:6px}
+.act.on{pointer-events:auto;opacity:1;cursor:pointer}
+.act.on:hover{background:rgba(13,153,255,.10);outline:1px solid rgba(13,153,255,.40)}
 .ov{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
 .badges,.cursors{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .badge{position:absolute;transform:translate(-50%);padding:1px 4px;border-radius:2px;color:#fff;font:600 11px/16px Inter,system-ui,-apple-system,"Segoe UI",sans-serif;white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -1645,6 +1719,7 @@
 <div class="layer under"></div>
 <div class="port"><div class="world"></div></div>
 <div class="layer over"></div>
+<div class="acts v"></div>
 <div class="intro"></div>
 <svg class="ov"></svg>
 <div class="badges"></div>
@@ -1652,19 +1727,14 @@
 <div class="rulers"></div>
 <div class="hud">
   <div class="dots"></div>
-  <div class="txt"><span class="status">Scanning page…</span></div>
+  <div class="txt"><span class="status">${t("scanning", "Scanning page…")}</span></div>
   <div class="bar"><i></i></div>
-  <button data-a="tour" title="${t("ttTour", "Auto-scroll while the swarm builds")}">${t("tour", "Tour")}</button>
-  <button data-a="speed" title="${t("ttSpeed", "Build speed")}">1×</button>
-  <button data-a="sound" class="snd" title="${t("ttSound", "Sound (M)")}"></button>
-  <button data-a="live" class="pri" hidden title="${t("ttLive", "Fade back to the real page")}">${t("goLive", "Go live")}</button>
-  <button data-a="replay" hidden title="${t("ttReplay", "Wipe and rebuild again")}">${t("replay", "Replay")}</button>
-  <button data-a="close" class="x" title="${t("ttExit", "Exit (Esc)")}" aria-label="${t("exit", "Exit")}">✕</button>
 </div>`;
       const $ = (s) => root.querySelector(s);
       this.bg = $(".bg");
       this.under = $(".under");
       this.over = $(".over");
+      this.actsV = $(".acts.v");
       this.port = $(".port");
       this.world = $(".world");
       this.intro = $(".intro");
@@ -1780,6 +1850,34 @@
         return d;
       });
       this.bdStart = this.env.geom().sy;
+
+      // Interactive proxies (0.2.0): world-layer ones ride inside .world so the
+      // scroll transform moves them with the drawn content; fixed ones stay
+      // viewport-anchored next to the over layer.
+      this.actsW = document.createElement("div");
+      this.actsW.className = "acts w";
+      this.world.appendChild(this.actsW);
+      for (const L of model.links || []) this.mountLink(L);
+    }
+
+    mountLink(L) {
+      const a = document.createElement("a");
+      a.className = "act";
+      a.href = L.href;
+      if (L.target) a.target = L.target;
+      a.rel = "noopener";
+      a.dataset.sr = String(L.id);
+      a.style.transform = `translate(${L.box.x}px,${L.box.y}px)`;
+      a.style.width = L.box.w + "px";
+      a.style.height = L.box.h + "px";
+      (L.layer === "world" ? this.actsW : this.actsV).appendChild(a);
+      L.proxy = a;
+    }
+
+    // Transparent mode (0.2.0): fade the painted backdrop out so the live
+    // background keepers show through once the real content is hidden.
+    revealBackdrop() {
+      this.bg.classList.remove("on");
     }
 
     makeNode(it) {
@@ -2153,6 +2251,39 @@
       this.guideDeps = new Map(m.guides.map((g) => [g, g.deps || []]));
       this.waitCount = m.tasks.length;
       this.ready = true;
+      // Interactive proxies: count down each link's unfinished tasks; the task
+      // completion choke point below flips the proxy on when the count hits 0.
+      this.pendingLinks = new Map();
+      this.taskLinks = new Map();
+      for (const L of m.links || []) {
+        if (!L.proxy) continue;
+        if (!L.deps.length) {
+          L.proxy.classList.add("on");
+          L.on = true;
+          continue;
+        }
+        this.pendingLinks.set(L, L.deps.length);
+        for (const tk of L.deps) {
+          let arr = this.taskLinks.get(tk);
+          if (!arr) this.taskLinks.set(tk, (arr = []));
+          arr.push(L);
+        }
+      }
+    }
+
+    onTaskDone(task) {
+      const ls = this.taskLinks && this.taskLinks.get(task);
+      if (!ls) return;
+      for (const L of ls) {
+        const n = (this.pendingLinks.get(L) || 0) - 1;
+        if (n <= 0) {
+          this.pendingLinks.delete(L);
+          if (!L.on) {
+            L.on = true;
+            if (L.proxy) L.proxy.classList.add("on");
+          }
+        } else this.pendingLinks.set(L, n);
+      }
     }
 
     makeCursor(x, y, home = false) {
@@ -2411,6 +2542,7 @@
             c.task.state = "done";
             c.task.doneAt = this.time;
             this.doneCount++;
+            this.onTaskDone(c.task);
             c.task = null;
             c.ov = null;
             if (c.sticky) {
@@ -3075,7 +3207,6 @@
   const E2 = 40;
   const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
   let soundPref = ENGINE_CFG.soundDefault !== false;
-  const SPK_ICON = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6v4h2.5l3.5 3V3L5 6z" fill="currentColor"/>';
 
   class Sound {
     constructor() {
@@ -3505,7 +3636,10 @@
     }
 
     async run() {
+      restoreContent(); // defensive: a leaked hidden page would empty the capture
       this.env = detectEnv();
+      this.keepers = findKeepers();
+      this.env.keepers = this.keepers;
       const shotP = this.loadShot();
       this.view = new View(this.env);
       this.engine = new Engine(this.view);
@@ -3518,14 +3652,6 @@
       this.last = performance.now();
       this.raf = requestAnimationFrame((t) => this.frame(t));
       await nextFrame();
-      this.renderSoundBtn();
-      if (this.tour) {
-        const tb = this.view.root.querySelector('[data-a="tour"]');
-        if (tb) {
-          tb.classList.add("on");
-          tb.textContent = t("touring", "Touring");
-        }
-      }
       this.sfx.intro();
       this.view.bg.classList.add("on");
       this.view.intro.classList.add("on");
@@ -3553,10 +3679,17 @@
         model = captureModel(this.env, shot);
       } catch (err) {
         console.error("[swarm-rebuild] capture failed", err);
-        model = { items: [], tasks: [], groups: [], guides: [], docW: 0, docH: 0 };
+        model = { items: [], tasks: [], groups: [], guides: [], links: [], docW: 0, docH: 0 };
       }
       mark("capture");
       if (this.dead) return;
+      // Transparent mode: only now (capture already ran on the live DOM) hide
+      // the real content — keepers stay visible — and fade the painted backdrop
+      // so the live background shows through (0.1.2's bug was hiding earlier).
+      if (this.keepers.size) {
+        hideContent(this.keepers, this.env);
+        this.view.revealBackdrop();
+      }
       this.view.mount(model);
       this.engine.setModel(model);
       this.model = model;
@@ -3611,7 +3744,6 @@
           stop(false);
         } else if ((e.key === "m" || e.key === "M") && !e.metaKey && !e.ctrlKey && !e.altKey) {
           this.sfx.setOn(!this.sfx.on);
-          this.renderSoundBtn();
         }
         this.unlockSound();
       }, true);
@@ -3623,49 +3755,50 @@
           this.env.scroller.scrollBy({ top: e.deltaY, left: e.deltaX, behavior: "instant" });
         }, { passive: false });
       }
-      on(this.view.hud, "click", (e) => {
-        const b = e.target.closest("button");
-        if (!b) return;
-        const a = b.dataset.a;
-        if (a === "close") stop(false);
-        else if (a === "live") stop(true);
-        else if (a === "replay") restart();
-        else if (a === "tour") {
-          this.tour = !this.tour;
-          b.classList.toggle("on", this.tour);
-          b.textContent = this.tour ? t("touring", "Touring") : t("tour", "Tour");
-          if (this.tour) this.engine.start();
-        } else if (a === "sound") {
-          if (this.sfx.on && this.sfx.blocked) this.sfx.resume();
-          else this.sfx.setOn(!this.sfx.on);
-          setTimeout(() => this.renderSoundBtn(), 60);
-        } else if (a === "speed") {
-          this.speedIx = (this.speedIx + 1) % this.speeds.length;
-          this.engine.speed = this.speeds[this.speedIx];
-          b.textContent = this.speeds[this.speedIx] + "×";
+      // Clicking a rebuilt link (0.2.0): navigate. The proxy is a real <a>, but
+      // we drive teardown ourselves so audio and the host settle before the jump.
+      const onAct = (e) => {
+        const a = e.target.closest("a.act");
+        if (!a) return;
+        const L = this.model && this.model.links && this.model.links[+a.dataset.sr];
+        if (!L) return;
+        e.preventDefault();
+        const raw = L.el.getAttribute("href") || "";
+        if (L.target === "_blank") {
+          window.open(L.href, "_blank", "noopener"); // must stay in the user gesture
+          return;
         }
-      });
+        if (raw.charAt(0) === "#") {
+          const id = decodeURIComponent(raw.slice(1));
+          stop(true);
+          setTimeout(() => {
+            let target = null;
+            if (id) {
+              try {
+                target = document.getElementById(id) || document.querySelector(`#${CSS.escape(id)}`);
+              } catch (_) {}
+            }
+            if (target) target.scrollIntoView({ behavior: "smooth" });
+            else if (id) location.hash = raw;
+          }, 500);
+          return;
+        }
+        stop(false);
+        location.href = L.href;
+      };
+      on(this.view.actsV, "click", onAct);
+      on(this.view.world, "click", onAct);
     }
 
     unlockSound() {
       if (this.dead || !this.sfx || !this.sfx.blocked) return;
       this.sfx.resume();
-      setTimeout(() => this.renderSoundBtn(), 80);
     }
 
-    renderSoundBtn() {
-      const b = this.view.root.querySelector('[data-a="sound"]');
-      if (!b || !this.sfx) return;
-      const tap = this.sfx.on && this.sfx.blocked;
-      const key = this.sfx.on ? (tap ? "tap" : "on") : "off";
-      if (b._k === key) return;
-      b._k = key;
-      b.classList.toggle("off", key === "off");
-      b.classList.toggle("tap", tap);
-      const waves = '<path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.6a6 6 0 0 1 0 8.8"/>';
-      const mute = '<path d="M11 6l4 4M15 6l-4 4"/>';
-      b.innerHTML = `${SPK_ICON}${key === "off" ? mute : waves}</svg>${tap ? `<span>${t("tapForSound", "Tap for sound")}</span>` : ""}`;
-      b.title = key === "off" ? t("soundOff", "Sound off (M)") : t("soundOn", "Sound on (M)");
+    // Card control surface (0.2.0): the visitor card drives these live.
+    setTour(on) {
+      this.tour = !!on;
+      if (this.tour) this.engine.start();
     }
 
     frame(now) {
@@ -3679,7 +3812,6 @@
         if (!this._hudT || now - this._hudT > 200) {
           this._hudT = now;
           this.updateHud();
-          this.renderSoundBtn();
         }
       } catch (err) {
         console.error("[swarm-rebuild]", err);
@@ -3722,7 +3854,7 @@
         const below = E.tasks.some((t) => t.state === "wait" && t.layer === "world" && t.gate > E.frontier);
         v.status.innerHTML =
           `<b>${workers}</b> agents<span class="sep"></span><b>${done.toLocaleString()}</b> / ${total.toLocaleString()} layers` +
-          (below && pend && !this.tour && E.backlog() === 0 ? `<span class="sep"></span>scroll to keep building` : "");
+          (below && pend && !this.tour && E.backlog() === 0 ? `<span class="sep"></span>${t("scrollHint", "scroll to keep building")}` : "");
       }
       v.barFill.style.width = total ? `${(done / total) * 100}%` : "0%";
       const busy = E.cursors.filter((c) => c.task).slice(-5);
@@ -3743,15 +3875,12 @@
       v.status.innerHTML = t("rebuiltIn", "Rebuilt by <b>%d</b> agents in <b>%d</b>s", workers, secs);
       v.barFill.style.width = "100%";
       v.dots.innerHTML = "";
-      v.root.querySelector('[data-a="live"]').hidden = false;
-      v.root.querySelector('[data-a="replay"]').hidden = false;
-      v.root.querySelector('[data-a="tour"]').hidden = true;
-      v.root.querySelector('[data-a="speed"]').hidden = true;
       this.tour = false;
       fireComplete();
     }
 
     destroy(reveal) {
+      restoreContent(); // transparent mode: put the real page back before fading
       unhidePage();
       if (this.sfx) {
         if (reveal) this.sfx.release();
@@ -3799,6 +3928,64 @@
     await nextFrame();
   }
 
+  // ---- transparent backdrop (0.2.0) -----------------------------------
+  // Fixed full-viewport media (canvas/img/video/svg) counts as live background
+  // (0.1.2's withdrawn mode, rebuilt: keepers are neither hidden nor rebuilt).
+  function findKeepers() {
+    const out = new Set();
+    if (!document.body) return out;
+    const vw = innerWidth;
+    const vh = innerHeight;
+    const all = document.body.getElementsByTagName("*");
+    for (let i = 0; i < all.length && out.size < 8 && i < 20000; i++) {
+      const el = all[i];
+      const tag = el.localName;
+      if (tag !== "canvas" && tag !== "img" && tag !== "video" && tag !== "svg") continue;
+      const cs = getComputedStyle(el);
+      if (cs.position !== "fixed" || cs.display === "none" || cs.visibility !== "visible") continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < vw * 0.95 || r.height < vh * 0.95) continue;
+      out.add(el);
+    }
+    return out;
+  }
+
+  // Elements whose inline visibility we set, with the previous value to restore.
+  let hiddenContent = [];
+
+  function restoreContent() {
+    for (const [el, prev] of hiddenContent) el.style.visibility = prev;
+    hiddenContent = [];
+  }
+
+  // Hide every maximal subtree that contains no keeper; recurse only along
+  // keeper ancestor chains. Runs AFTER capture — visibility:hidden elements
+  // are skipped by the capture walk, so ordering here is load-bearing.
+  function hideContent(keepers, env) {
+    restoreContent();
+    const chain = new Set(keepers);
+    for (const k of keepers) {
+      let p = k.parentElement;
+      while (p && p !== document.documentElement) {
+        chain.add(p);
+        p = p.parentElement;
+      }
+    }
+    const skip = (el) => el === env.host || el.tagName === "HEAD" || el.id === "swarm-rebuild-card-host";
+    const hideFrom = (root) => {
+      for (const c of root.children) {
+        if (skip(c)) continue;
+        if (chain.has(c)) {
+          hideFrom(c);
+          continue;
+        }
+        hiddenContent.push([c, c.style.visibility]);
+        c.style.visibility = "hidden";
+      }
+    };
+    hideFrom(document.documentElement);
+  }
+
   let app = null;
   let lastShot = null;
 
@@ -3827,6 +4014,7 @@
       // rebuild from where the first run started so screenshot crops line up again
       if (lastShot) a.env.scrollTo(lastShot.at.sy, lastShot.at.sx);
     }
+    restoreContent(); // capture must see the live page again (0.1.2 lesson)
     start();
   }
 
@@ -3849,6 +4037,12 @@
     stop,
     goLive() {
       stop(true);
+    },
+    setSound(on) {
+      if (app && app.sfx) app.sfx.setOn(!!on);
+    },
+    setTour(on) {
+      if (app) app.setTour(on);
     },
     onComplete(cb) {
       if (typeof cb === "function") completeCbs.push(cb);

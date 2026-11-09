@@ -3,12 +3,12 @@
  * Settings storage: defaults, merged read (option `sr_settings`), whitelist sanitize
  * for the Settings API.
  *
- * Contract (pinned in the plan):
- * - defaults():  the eight settings keys with verbatim default values.
+ * Contract (0.2.0, pinned in the plan):
+ * - defaults():  the five settings keys with verbatim default values.
  * - get():       stored partial option merged OVER defaults via wp_parse_args.
  * - sanitize():  whitelist scope, normalize scope_urls (trim, strip home_url prefix,
- *                strip slashes, drop empties), cast flags to bool, delay = floatval
- *                within [0.5, 10] else fallback 2.5. Always returns every key.
+ *                strip slashes, drop empties), cast flags to bool. Always returns
+ *                every key.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -24,12 +24,9 @@ if ( ! class_exists( 'SR_Settings' ) ) {
 			return array(
 				'scope'          => 'home',
 				'scope_urls'     => array(),
-				'intro_enabled'  => false,
-				'card_enabled'   => true,
+				'auto_return'    => true,
 				'sound_default'  => true,
-				'hotkey_enabled' => true,
 				'mobile_enabled' => false,
-				'intro_delay'    => 2.5,
 			);
 		}
 
@@ -79,20 +76,12 @@ if ( ! class_exists( 'SR_Settings' ) ) {
 				}
 			}
 
-			$delay = isset( $input['intro_delay'] ) ? floatval( $input['intro_delay'] ) : 0.0;
-			if ( $delay < 0.5 || $delay > 10 ) {
-				$delay = $defaults['intro_delay'];
-			}
-
 			return array(
 				'scope'          => $scope,
 				'scope_urls'     => $urls,
-				'intro_enabled'  => (bool) ( $input['intro_enabled'] ?? false ),
-				'card_enabled'   => (bool) ( $input['card_enabled'] ?? false ),
+				'auto_return'    => (bool) ( $input['auto_return'] ?? false ),
 				'sound_default'  => (bool) ( $input['sound_default'] ?? false ),
-				'hotkey_enabled' => (bool) ( $input['hotkey_enabled'] ?? false ),
 				'mobile_enabled' => (bool) ( $input['mobile_enabled'] ?? false ),
-				'intro_delay'    => $delay,
 			);
 		}
 	}

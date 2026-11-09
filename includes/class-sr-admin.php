@@ -2,7 +2,7 @@
 /**
  * Admin settings page via Settings API.
  *
- * One page under Settings, one section, eight fields driven by a field
+ * One page under Settings, one section, fields driven by a field
  * registry and a single renderer. All output escaped; nonce provided by
  * settings_fields(); capability manage_options.
  */
@@ -75,43 +75,26 @@ if ( ! class_exists( 'SR_Admin' ) ) {
 					'type'        => 'textarea',
 					'description' => esc_html__( 'One path per line (e.g. about or pricing). Used when "Specific URLs" is selected.', 'swarm-rebuild' ),
 				),
-				'intro_enabled'  => array(
-					'label'       => esc_html__( 'Intro mode', 'swarm-rebuild' ),
+				'auto_return'    => array(
+					'label'       => esc_html__( 'Return to the live page when finished', 'swarm-rebuild' ),
 					'type'        => 'checkbox',
-					'description' => esc_html__( 'Auto-play the rebuild once per visitor on pages in scope. Skippable and respects reduced-motion.', 'swarm-rebuild' ),
-				),
-				'card_enabled'   => array(
-					'label'       => esc_html__( 'Visitor control card', 'swarm-rebuild' ),
-					'type'        => 'checkbox',
-					'description' => esc_html__( 'Floating card in the bottom-left corner with replay, stop and sound controls.', 'swarm-rebuild' ),
+					'description' => esc_html__( 'The rebuild plays on every visit; finished links are clickable while it builds. When on, the page fades back to the live site a moment after the rebuild completes. When off, the rebuilt page stays until the visitor clicks a link or exits.', 'swarm-rebuild' ),
 				),
 				'sound_default'  => array(
-					'label' => esc_html__( 'Sound on by default', 'swarm-rebuild' ),
-					'type'  => 'checkbox',
-				),
-				'hotkey_enabled' => array(
-					'label'       => esc_html__( 'Keyboard shortcut', 'swarm-rebuild' ),
+					'label'       => esc_html__( 'Sound on by default', 'swarm-rebuild' ),
 					'type'        => 'checkbox',
-					'description' => esc_html__( 'Alt+Shift+S triggers the rebuild on pages in scope.', 'swarm-rebuild' ),
+					'description' => esc_html__( 'Visitors can mute on the floating card; the choice sticks in their browser.', 'swarm-rebuild' ),
 				),
 				'mobile_enabled' => array(
 					'label'       => esc_html__( 'Enable on mobile', 'swarm-rebuild' ),
 					'type'        => 'checkbox',
 					'description' => esc_html__( 'Off by default: touch devices have no cursor metaphor.', 'swarm-rebuild' ),
 				),
-				'intro_delay'    => array(
-					'label'       => esc_html__( 'Intro end delay (seconds)', 'swarm-rebuild' ),
-					'type'        => 'number',
-					'min'         => 0.5,
-					'max'         => 10,
-					'step'        => 0.5,
-					'description' => esc_html__( 'How long the finished state lingers before auto-returning to the live page.', 'swarm-rebuild' ),
-				),
 			);
 		}
 
 		public static function render_section_intro() {
-			echo '<p>' . esc_html__( 'Choose where the swarm can run and how visitors experience it. Visitors who turned the animation off in their browser keep that choice.', 'swarm-rebuild' ) . '</p>';
+			echo '<p>' . esc_html__( 'The rebuild plays automatically on every visit to pages in scope — finished elements become clickable while the swarm is still building. Visitors who dismissed the animation (Esc or the card) keep that choice in their browser.', 'swarm-rebuild' ) . '</p>';
 		}
 
 		public static function render_page() {

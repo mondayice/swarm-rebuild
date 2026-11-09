@@ -15,7 +15,6 @@ function memoryStorage() {
 
 test('all flags default to false', () => {
   const p = createPrefs(memoryStorage());
-  assert.strictEqual(p.seen(), false);
   assert.strictEqual(p.optedOut(), false);
   assert.strictEqual(p.collapsed(), false);
   assert.strictEqual(p.sound(), false);
@@ -23,11 +22,9 @@ test('all flags default to false', () => {
 
 test('setters persist and getters read back', () => {
   const p = createPrefs(memoryStorage());
-  p.markSeen();
   p.setOptedOut(true);
   p.setCollapsed(true);
   p.setSound(true);
-  assert.strictEqual(p.seen(), true);
   assert.strictEqual(p.optedOut(), true);
   assert.strictEqual(p.collapsed(), true);
   assert.strictEqual(p.sound(), true);
@@ -45,12 +42,11 @@ test('clearing a flag stores an explicit off', () => {
 test('localStorage keys are the pinned site-wide names', () => {
   const s = memoryStorage();
   const p = createPrefs(s);
-  p.markSeen();
   p.setOptedOut(true);
   p.setCollapsed(true);
   p.setSound(true);
   const setKeys = s.touched.filter(([op]) => op === 'set').map(([, k]) => k);
-  assert.deepStrictEqual(setKeys.sort(), ['srCardCollapsed', 'srIntroSeen', 'srOptOut', 'srSound'].sort());
+  assert.deepStrictEqual(setKeys.sort(), ['srCardCollapsed', 'srOptOut', 'srSound'].sort());
 });
 
 test('hasSound distinguishes unset from explicitly set', () => {
@@ -69,8 +65,7 @@ test('a throwing storage (private mode) never breaks the caller', () => {
     removeItem() { throw new Error('quota'); },
   };
   const p = createPrefs(boom);
-  assert.strictEqual(p.seen(), false);
-  assert.doesNotThrow(() => p.markSeen());
+  assert.strictEqual(p.optedOut(), false);
   assert.doesNotThrow(() => p.setOptedOut(true));
   assert.strictEqual(p.optedOut(), false);
 });

@@ -4,7 +4,6 @@
  * access degrades to defaults without ever breaking the caller.
  */
 
-const KEY_SEEN = 'srIntroSeen';
 const KEY_OPT_OUT = 'srOptOut';
 const KEY_COLLAPSED = 'srCardCollapsed';
 const KEY_SOUND = 'srSound';
@@ -37,8 +36,6 @@ function safeSet(storage, key, value) {
 
 export function createPrefs(storage) {
   return {
-    seen() { return safeGet(storage, KEY_SEEN); },
-    markSeen() { safeSet(storage, KEY_SEEN, true); },
     optedOut() { return safeGet(storage, KEY_OPT_OUT); },
     setOptedOut(value) { safeSet(storage, KEY_OPT_OUT, value); },
     collapsed() { return safeGet(storage, KEY_COLLAPSED); },

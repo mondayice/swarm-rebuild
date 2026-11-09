@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Swarm Rebuild harness — background + links</title>
+<style>
+  html, body { margin: 0; padding: 0; background: rgb(228, 237, 235); font: 16px/1.7 system-ui, sans-serif; }
+  /* Simulated site wallpaper: a fixed full-viewport animated canvas (like the
+     4 canvases on mondayice.com). Must stay live during the animation. */
+  #wallpaper {
+    position: fixed; inset: 0; z-index: 0;
+    /* forest-ish gradient fallback under the canvas paint */
+    background: linear-gradient(160deg, #14e, #4a7);
+  }
+  main { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 48px 24px 400px; }
+  header nav a { margin-right: 16px; font-weight: 600; }
+  .hero { font-size: 34px; margin: 40px 0 12px; }
+  .links a { display: inline-block; margin: 6px 14px 6px 0; padding: 6px 10px; background: #fff; border-radius: 6px; text-decoration: none; color: #06c; }
+  .card { background: #fff; border-radius: 10px; padding: 16px 20px; margin: 18px 0; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  h2 { margin-top: 48px; }
+  p.fill { color: #333; }
+</style>
+</head>
+<body>
+  <canvas id="wallpaper"></canvas>
+  <main>
+    <header>
+      <nav>
+        <a href="#top" id="top">锚点:回顶部</a>
+        <a href="#section-b">锚点:B 区</a>
+        <a href="plain.html">普通页面(无背景画布)</a>
+        <a href="https://example.com/" target="_blank">外链 _blank</a>
+      </nav>
+    </header>
+
+    <h1 class="hero">Swarm Rebuild 0.2.0 harness</h1>
+    <p class="fill">这个页面用于验证:动画过程中背景画布保持可见、绘制完成的链接代理逐个点亮并可点击。</p>
+
+    <div class="links">
+      <a href="#top">同页锚点</a>
+      <a href="#section-b">跳到 B 区</a>
+      <a href="plain.html">去 plain 页</a>
+      <a href="https://example.com/">外部链接</a>
+      <a href="javascript:void(0)">无效链接(不应有代理)</a>
+    </div>
+
+    <h2 id="section-a">A 区</h2>
+    <div class="card"><p class="fill">卡片一:若干文本内容,用于生成文本图层与打字任务。The quick brown fox jumps over the lazy dog.</p></div>
+    <div class="card"><p class="fill">卡片二:更多内容让页面足够长,触发扫描与巡览。Pack my box with five dozen liquor jugs.</p></div>
+
+    <h2 id="section-b">B 区(锚点目标)</h2>
+    <div class="card"><p class="fill">卡片三:How vexingly quick daft zebras jump! 以下是重复组件,用于触发 alt 拖拽复制。</p></div>
+    <ul>
+      <li>列表项 alpha</li>
+      <li>列表项 beta</li>
+      <li>列表项 gamma</li>
+      <li>列表项 delta</li>
+    </ul>
+    <div class="card"><p class="fill">卡片四:Sphinx of black quartz, judge my vow. 继续填充页面高度。</p></div>
+    <div class="card"><p class="fill">卡片五:The five boxing wizards jump quickly. End of harness content.</p></div>
+  </main>
+
+<script>
+  // Animated wallpaper so "still live" is visually distinguishable from a frozen clone.
+  (function () {
+    var c = document.getElementById('wallpaper');
+    var ctx = c.getContext('2d');
+    function size() { c.width = innerWidth; c.height = innerHeight; }
+    addEventListener('resize', size); size();
+    var t = 0;
+    (function draw() {
+      t += 0.012;
+      var g = ctx.createLinearGradient(0, 0, c.width, c.height);
+      g.addColorStop(0, 'hsl(' + (140 + 20 * Math.sin(t)) + ',45%,32%)');
+      g.addColorStop(1, 'hsl(' + (180 + 20 * Math.cos(t)) + ',40%,22%)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.strokeStyle = 'rgba(255,255,255,.25)';
+      for (var i = 0; i < 24; i++) {
+        var x = (i * 97 + t * 60) % (c.width + 80) - 40;
+        var y = 60 + 36 * i + 18 * Math.sin(t + i);
+        if (y > c.height) continue;
+        ctx.beginPath();
+        ctx.moveTo(x - 24, y);
+        ctx.quadraticCurveTo(x, y - 18, x + 24, y);
+        ctx.stroke();
+      }
+      requestAnimationFrame(draw);
+    })();
+  })();
+</script>
+</body>
+</html>

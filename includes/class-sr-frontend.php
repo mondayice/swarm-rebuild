@@ -170,46 +170,36 @@ if ( ! class_exists( 'SR_Frontend' ) ) {
 		}
 
 		/**
-		 * Loader config JSON (shape pinned in the plan; engineUrl included so the
-		 * loader can lazily inject the engine from plugin assets).
+		 * Loader config JSON (0.2.0 shape pinned in the plan; engineUrl included so
+		 * the loader can lazily inject the engine from plugin assets). Autoplay is
+		 * simply "this page is in scope" — every visit replays; the loader's
+		 * judgment chain (reduced-motion / visitor opt-out) does the rest.
 		 *
 		 * @param array $s   Settings.
 		 * @param array $ctx {is_home, path}
 		 */
 		public static function build_config( array $s, array $ctx ) {
-			$autoplay = ! empty( $s['intro_enabled'] ) && self::is_in_scope( $s, $ctx['path'], $ctx['is_home'] );
-
 			return array(
-				'scopeActive'  => true,
-				'autoplay'     => $autoplay,
-				'autoplayMode' => $autoplay ? 'intro' : null,
-				'hotkeyEnabled' => (bool) $s['hotkey_enabled'],
-				'cardEnabled'  => (bool) $s['card_enabled'],
+				'scopeActive' => true,
+				'autoplay'    => self::is_in_scope( $s, $ctx['path'], $ctx['is_home'] ) || ! empty( $ctx['shortcode_active'] ),
+				'autoReturn'  => (bool) $s['auto_return'],
 				'soundDefault' => (bool) $s['sound_default'],
-				'introDelay'   => (float) $s['intro_delay'],
-				'engineUrl'    => add_query_arg( 'ver', SWARM_REBUILD_VERSION, SWARM_REBUILD_URL . 'assets/js/engine/swarm.js' ),
-				'strings'      => array(
-					'tour'        => __( 'Tour', 'swarm-rebuild' ),
-					'touring'     => __( 'Touring', 'swarm-rebuild' ),
-					'ttTour'      => __( 'Auto-scroll while the swarm builds', 'swarm-rebuild' ),
-					'ttSpeed'     => __( 'Build speed', 'swarm-rebuild' ),
-					'ttSound'     => __( 'Sound (M)', 'swarm-rebuild' ),
-					'ttLive'      => __( 'Fade back to the real page', 'swarm-rebuild' ),
-					'ttReplay'    => __( 'Wipe and rebuild again', 'swarm-rebuild' ),
-					'ttExit'      => __( 'Exit (Esc)', 'swarm-rebuild' ),
-					'goLive'      => __( 'Go live', 'swarm-rebuild' ),
-					'replay'      => __( 'Replay', 'swarm-rebuild' ),
-					'exit'        => __( 'Exit', 'swarm-rebuild' ),
-					'tapForSound' => __( 'Tap for sound', 'swarm-rebuild' ),
-					'soundOn'     => __( 'Sound on (M)', 'swarm-rebuild' ),
-					'soundOff'    => __( 'Sound off (M)', 'swarm-rebuild' ),
+				'engineUrl'   => add_query_arg( 'ver', SWARM_REBUILD_VERSION, SWARM_REBUILD_URL . 'assets/js/engine/swarm.js' ),
+				'strings'     => array(
+					// Engine status strip.
+					'scanning'    => __( 'Scanning page…', 'swarm-rebuild' ),
 					'agentsReady' => __( '<b>%d</b> agents ready', 'swarm-rebuild' ),
 					'rebuiltIn'   => __( 'Rebuilt by <b>%d</b> agents in <b>%d</b>s', 'swarm-rebuild' ),
 					'sizeBadge'   => __( '%d × %d', 'swarm-rebuild' ),
+					'scrollHint'  => __( 'scroll to keep building', 'swarm-rebuild' ),
+					// Visitor card (the sole control surface during a run).
 					'cardReplay'  => __( 'Replay', 'swarm-rebuild' ),
 					'cardClose'   => __( 'Close animation', 'swarm-rebuild' ),
 					'cardSound'   => __( 'Sound', 'swarm-rebuild' ),
-					'cardSoundHint' => __( 'Applies from the next page load; press M during the animation.', 'swarm-rebuild' ),
+					'cardSoundHint' => __( 'Applies immediately; press M during the animation as well.', 'swarm-rebuild' ),
+					'cardTour'    => __( 'Tour', 'swarm-rebuild' ),
+					'cardTouring' => __( 'Touring', 'swarm-rebuild' ),
+					'cardTourHint' => __( 'Auto-scroll while the swarm builds', 'swarm-rebuild' ),
 					'cardHide'    => __( 'Hide', 'swarm-rebuild' ),
 					'cardShow'    => __( 'Show', 'swarm-rebuild' ),
 				),

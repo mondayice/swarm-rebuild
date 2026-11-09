@@ -129,36 +129,30 @@ class FrontendTest extends TestCase {
 
 	/* ---- build_config ---- */
 
-	public function test_build_config_intro_disabled_and_null_mode() {
+	public function test_build_config_autoplay_is_simply_in_scope() {
 		$ctx  = array( 'is_home' => true, 'path' => '/' );
 		$cfg  = SR_Frontend::build_config( $this->s, $ctx );
-		$this->assertFalse( $cfg['autoplay'] );
-		$this->assertNull( $cfg['autoplayMode'] );
-	}
-
-	public function test_build_config_intro_enabled_and_in_scope() {
-		$s    = array_merge( $this->s, array( 'intro_enabled' => true, 'scope' => 'home' ) );
-		$ctx  = array( 'is_home' => true, 'path' => '/' );
-		$cfg  = SR_Frontend::build_config( $s, $ctx );
 		$this->assertTrue( $cfg['autoplay'] );
-		$this->assertSame( 'intro', $cfg['autoplayMode'] );
+		$this->assertTrue( $cfg['scopeActive'] );
 	}
 
-	public function test_build_config_intro_enabled_but_out_of_scope() {
-		$s    = array_merge( $this->s, array( 'intro_enabled' => true, 'scope' => 'home' ) );
+	public function test_build_config_autoplay_out_of_scope() {
 		$ctx  = array( 'is_home' => false, 'path' => '/other/' );
-		$cfg  = SR_Frontend::build_config( $s, $ctx );
+		$cfg  = SR_Frontend::build_config( $this->s, $ctx );
 		$this->assertFalse( $cfg['autoplay'] );
-		$this->assertNull( $cfg['autoplayMode'] );
+	}
+
+	public function test_build_config_shortcode_page_is_autoplay() {
+		$ctx  = array( 'is_home' => false, 'path' => '/deep/', 'shortcode_active' => true );
+		$cfg  = SR_Frontend::build_config( $this->s, $ctx );
+		$this->assertTrue( $cfg['autoplay'] );
 	}
 
 	public function test_build_config_passes_through_settings_and_engine_url() {
-		$s    = array_merge( $this->s, array( 'intro_delay' => 4.5, 'hotkey_enabled' => false, 'sound_default' => false ) );
+		$s    = array_merge( $this->s, array( 'auto_return' => false, 'sound_default' => false ) );
 		$cfg  = SR_Frontend::build_config( $s, array( 'is_home' => true, 'path' => '/' ) );
 		$this->assertTrue( $cfg['scopeActive'] );
-		$this->assertSame( 4.5, $cfg['introDelay'] );
-		$this->assertFalse( $cfg['hotkeyEnabled'] );
-		$this->assertTrue( $cfg['cardEnabled'] );
+		$this->assertFalse( $cfg['autoReturn'] );
 		$this->assertFalse( $cfg['soundDefault'] );
 		$this->assertSame(
 			SWARM_REBUILD_URL . 'assets/js/engine/swarm.js?ver=' . SWARM_REBUILD_VERSION,
@@ -166,19 +160,17 @@ class FrontendTest extends TestCase {
 		);
 	}
 
-	public function test_build_config_strings_covers_all_23_keys() {
+	public function test_build_config_strings_covers_all_14_keys() {
 		$cfg      = SR_Frontend::build_config( $this->s, array( 'is_home' => true, 'path' => '/' ) );
 		$expected = array(
-			'tour', 'touring', 'ttTour', 'ttSpeed', 'ttSound', 'ttLive', 'ttReplay', 'ttExit',
-			'goLive', 'replay', 'exit', 'tapForSound', 'soundOn', 'soundOff',
-			'agentsReady', 'rebuiltIn', 'sizeBadge',
-			'cardReplay', 'cardClose', 'cardSound', 'cardSoundHint', 'cardHide', 'cardShow',
+			'scanning', 'agentsReady', 'rebuiltIn', 'sizeBadge', 'scrollHint',
+			'cardReplay', 'cardClose', 'cardSound', 'cardSoundHint',
+			'cardTour', 'cardTouring', 'cardTourHint', 'cardHide', 'cardShow',
 		);
 		$this->assertSame( $expected, array_keys( $cfg['strings'] ) );
-		$this->assertSame( 'Go live', $cfg['strings']['goLive'] );
 		$this->assertSame( 'Rebuilt by <b>%d</b> agents in <b>%d</b>s', $cfg['strings']['rebuiltIn'] );
 		$this->assertSame( '<b>%d</b> agents ready', $cfg['strings']['agentsReady'] );
-		$this->assertSame( 'Auto-scroll while the swarm builds', $cfg['strings']['ttTour'] );
+		$this->assertSame( 'Auto-scroll while the swarm builds', $cfg['strings']['cardTourHint'] );
 	}
 
 	/**

@@ -3,13 +3,16 @@
  *
  * Responsibilities (everything heavy lives in the lazily-injected engine):
  *  - read the #swarm-rebuild-config JSON tag printed by PHP (missing/broken → silent no-op)
- *  - render the visitor control card (bottom-left, collapsible to a left-edge handle)
- *  - Alt+Shift+S hotkey, ?swarm=1 URL param, [swarm_rebuild autoplay] marker merge
- *  - judgment chain: reduced-motion > visitor opt-out > (intro) seen-once-site-wide
+ *  - render the visitor control card (bottom-left, collapsible to a left-edge
+ *    handle) — the ONLY control surface during a run (0.2.0: engine HUD buttons
+ *    are gone; the HUD keeps just the status strip)
+ *  - ?swarm=1 URL param, [swarm_rebuild autoplay] marker merge
+ *  - judgment chain: reduced-motion > visitor opt-out > play (every visit replays)
  *  - pre-erase over-limit precheck BEFORE the engine is ever loaded
  *  - lazy-inject the engine once, then drive it through window.SwarmRebuild
- *  - autoplay (intro or shortcode) auto-exits to the live page after introDelay;
- *    manual triggers (hotkey, param, card replay) never auto-exit
+ *  - autoplay auto-returns to the live page after a 2.5s linger when the admin
+ *    enabled auto-return; manual triggers and link clicks never auto-return
+ *  - Esc (or the card's close button while idle) stops auto-playing in this browser
  */
 
 import { decideAutoPlay } from './modules/decide.js';
@@ -30,11 +33,14 @@ import { createEngineLoader } from './modules/engine-load.js';
   const prefs = createPrefs(window.localStorage);
   const engineLoader = createEngineLoader(document, cfg.engineUrl);
 
+  const AUTO_RETURN_LINGER = 2.5; // seconds the finished rebuild lingers before going live
+
   let currentTrigger = null; // 'auto' | 'manual' — set when a run starts
   let introTimer = null;
   let cardHost = null; // set once the visitor card exists
   let completeHooked = false; // engine completion callback registers once, not per run
   let soundOn = prefs.hasSound() ? prefs.sound() : !!cfg.soundDefault;
+  let tourOn = true; // mirrored from api.app.tour while a run is active
 
   const reducedMotion = () =>
     window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -43,10 +49,6 @@ import { createEngineLoader } from './modules/engine-load.js';
     scrollHeight: document.documentElement.scrollHeight,
     elementCount: document.getElementsByTagName('*').length,
   });
-
-  function resolveSound() {
-    return soundOn;
-  }
 
   /**
    * Start (or restart) a run. Returns false without side effects when
@@ -59,7 +61,7 @@ import { createEngineLoader } from './modules/engine-load.js';
 
     window.SwarmRebuildEngineConfig = {
       strings: cfg.strings || {},
-      soundDefault: resolveSound(),
+      soundDefault: soundOn,
     };
 
     engineLoader.load().then((ok) => {
@@ -69,11 +71,12 @@ import { createEngineLoader } from './modules/engine-load.js';
       if (!completeHooked) {
         completeHooked = true;
         api.onComplete(() => {
-          if (currentTrigger === 'auto') {
+          if (currentTrigger === 'auto' && cfg.autoReturn !== false) {
             clearTimeout(introTimer);
             introTimer = setTimeout(() => {
+              currentTrigger = null; // our own goLive must not read as a visitor exit
               if (window.SwarmRebuild && window.SwarmRebuild.app) window.SwarmRebuild.goLive();
-            }, Math.max(0.5, cfg.introDelay || 2.5) * 1000);
+            }, AUTO_RETURN_LINGER * 1000);
           }
         });
       }
@@ -85,7 +88,9 @@ import { createEngineLoader } from './modules/engine-load.js';
       // would cover the card: re-append the card host to <html> AFTER start so
       // tree order puts the card on top for this run (review C2).
       if (cardHost) document.documentElement.appendChild(cardHost);
-      if (trigger === 'auto') prefs.markSeen();
+      // Each run defaults tour ON; mirror the fresh run's state onto the card.
+      tourOn = api.app ? !!api.app.tour : true;
+      syncTour();
     });
     return true;
   }
@@ -95,38 +100,23 @@ import { createEngineLoader } from './modules/engine-load.js';
     run('manual');
   }
 
-  /* ---- autoplay decision (intro mode + shortcode marker merge) ---- */
+  /* ---- autoplay decision (every-visit; shortcode marker merge) ---- */
 
   let autoplay = !!cfg.autoplay;
-  let autoplayMode = cfg.autoplay ? cfg.autoplayMode : null;
   const marker = document.getElementById('swarm-rebuild-shortcode');
   if (marker) {
     try {
-      if (JSON.parse(marker.textContent).autoplay) {
-        autoplay = true;
-        autoplayMode = 'shortcode';
-      }
+      if (JSON.parse(marker.textContent).autoplay) autoplay = true;
     } catch {
       /* malformed marker: ignore */
     }
   }
 
   const decision = decideAutoPlay(
-    { autoplay, autoplayMode: autoplay ? autoplayMode : null },
-    { reducedMotion: reducedMotion(), optedOut: prefs.optedOut(), seenSiteWide: prefs.seen() }
+    { autoplay },
+    { reducedMotion: reducedMotion(), optedOut: prefs.optedOut() }
   );
   if (decision.play) run('auto');
-
-  /* ---- hotkey ---- */
-
-  if (cfg.hotkeyEnabled) {
-    document.addEventListener('keydown', (e) => {
-      if (e.altKey && e.shiftKey && e.code === 'KeyS') {
-        e.preventDefault();
-        manualTrigger();
-      }
-    });
-  }
 
   /* ---- ?swarm=1 (consume the param so a refresh doesn't retrigger) ---- */
 
@@ -138,9 +128,23 @@ import { createEngineLoader } from './modules/engine-load.js';
     manualTrigger();
   }
 
-  /* ---- visitor card ---- */
+  /* ---- Esc during an auto run = this browser stops auto-playing ---- */
+  // Window-capture, registered BEFORE the engine loads: the engine's own Esc
+  // binding (also window-capture) calls stopPropagation(), which never blocks
+  // same-target listeners — but it WOULD block a document-level one.
 
-  if (!cfg.cardEnabled) return;
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      if (e.key !== 'Escape') return;
+      if (currentTrigger === 'auto' && window.SwarmRebuild && window.SwarmRebuild.app) {
+        prefs.setOptedOut(true);
+      }
+    },
+    true
+  );
+
+  /* ---- visitor card (the sole control surface during a run) ---- */
 
   const strings = cfg.strings || {};
   const host = document.createElement('div');
@@ -152,6 +156,7 @@ import { createEngineLoader } from './modules/engine-load.js';
     `<button type="button" class="sr-btn" data-sr="replay">${strings.cardReplay || 'Replay'}</button>`,
     `<button type="button" class="sr-btn" data-sr="close">${strings.cardClose || 'Close animation'}</button>`,
     `<button type="button" class="sr-btn" data-sr="sound">${strings.cardSound || 'Sound'}</button>`,
+    `<button type="button" class="sr-btn" data-sr="tour">${strings.cardTour || 'Tour'}</button>`,
     `<button type="button" class="sr-btn sr-btn-quiet" data-sr="hide">${strings.cardHide || 'Hide'}</button>`,
     '</div>',
     `<button type="button" class="sr-handle" data-sr="show" title="${strings.cardShow || 'Show'}">${strings.cardShow || 'Show'}</button>`,
@@ -159,11 +164,18 @@ import { createEngineLoader } from './modules/engine-load.js';
   document.body.appendChild(host);
 
   const soundBtn = host.querySelector('[data-sr="sound"]');
-  // v1: the toggle governs runs from the NEXT page load (the engine captures
-  // its sound default once, at injection). During a run, the HUD's M key rules.
+  const tourBtn = host.querySelector('[data-sr="tour"]');
+  // Sound applies immediately while a run is live (setSound) and seeds the next
+  // run via the engine config; M toggles it during the animation as well.
   if (strings.cardSoundHint) soundBtn.title = strings.cardSoundHint;
+  if (strings.cardTourHint) tourBtn.title = strings.cardTourHint;
   const syncSound = () => soundBtn.classList.toggle('sr-on', soundOn);
+  const syncTour = () => {
+    tourBtn.classList.toggle('sr-on', tourOn);
+    tourBtn.textContent = tourOn ? strings.cardTouring || 'Touring' : strings.cardTour || 'Tour';
+  };
   syncSound();
+  syncTour();
 
   host.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-sr]');
@@ -177,9 +189,10 @@ import { createEngineLoader } from './modules/engine-load.js';
       if (api && api.app) {
         // Playing: skip to the live page.
         clearTimeout(introTimer);
+        currentTrigger = null; // a deliberate skip is not a lasting opt-out…
         api.goLive();
       } else {
-        // Idle: this browser stops auto-playing the intro.
+        // …but when idle it means: this browser stops auto-playing.
         prefs.setOptedOut(true);
         btn.classList.add('sr-done');
       }
@@ -187,7 +200,12 @@ import { createEngineLoader } from './modules/engine-load.js';
       soundOn = !soundOn;
       prefs.setSound(soundOn);
       if (window.SwarmRebuildEngineConfig) window.SwarmRebuildEngineConfig.soundDefault = soundOn;
+      if (window.SwarmRebuild && window.SwarmRebuild.app) window.SwarmRebuild.setSound(soundOn);
       syncSound();
+    } else if (action === 'tour') {
+      tourOn = !tourOn;
+      if (window.SwarmRebuild && window.SwarmRebuild.app) window.SwarmRebuild.setTour(tourOn);
+      syncTour();
     } else if (action === 'hide') {
       host.classList.add('sr-collapsed');
       prefs.setCollapsed(true);

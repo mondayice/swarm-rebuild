@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Swarm Rebuild harness — plain page (no background canvas)</title>
+<style>
+  html, body { margin: 0; padding: 0; background: rgb(228, 237, 235); font: 16px/1.7 system-ui, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 48px 24px 300px; }
+  .card { background: #fff; border-radius: 10px; padding: 16px 20px; margin: 18px 0; }
+  a { color: #06c; }
+</style>
+</head>
+<body>
+  <main>
+    <h1>普通页面回归</h1>
+    <p>没有背景画布:透明模式必须自动退回 — .bg 铺 CSS 背景色、真实内容不隐藏。</p>
+    <div class="card"><p>回归卡片一。<a href="index.html">回背景页</a></p></div>
+    <div class="card"><p>回归卡片二。The quick brown fox jumps over the lazy dog.</p></div>
+    <div class="card"><p>回归卡片三。Pack my box with five dozen liquor jugs.</p></div>
+  </main>
+</body>
+</html>
