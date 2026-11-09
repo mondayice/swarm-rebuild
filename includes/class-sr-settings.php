@@ -29,6 +29,7 @@ if ( ! class_exists( 'SR_Settings' ) ) {
 				'sound_default'  => true,
 				'hotkey_enabled' => true,
 				'mobile_enabled' => false,
+				'canvas_bg'      => 'page',
 				'intro_delay'    => 2.5,
 			);
 		}
@@ -59,6 +60,10 @@ if ( ! class_exists( 'SR_Settings' ) ) {
 			$scope = ( isset( $input['scope'] ) && in_array( $input['scope'], array( 'home', 'urls', 'site' ), true ) )
 				? $input['scope']
 				: $defaults['scope'];
+
+			$canvas_bg = ( isset( $input['canvas_bg'] ) && in_array( $input['canvas_bg'], array( 'page', 'transparent', 'white' ), true ) )
+				? $input['canvas_bg']
+				: $defaults['canvas_bg'];
 
 			$urls = array();
 			if ( isset( $input['scope_urls'] ) && is_array( $input['scope_urls'] ) ) {
@@ -92,6 +97,7 @@ if ( ! class_exists( 'SR_Settings' ) ) {
 				'sound_default'  => (bool) ( $input['sound_default'] ?? false ),
 				'hotkey_enabled' => (bool) ( $input['hotkey_enabled'] ?? false ),
 				'mobile_enabled' => (bool) ( $input['mobile_enabled'] ?? false ),
+				'canvas_bg'      => $canvas_bg,
 				'intro_delay'    => $delay,
 			);
 		}

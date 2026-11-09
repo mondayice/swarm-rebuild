@@ -17,9 +17,16 @@ class SettingsTest extends TestCase {
 			'sound_default'  => true,
 			'hotkey_enabled' => true,
 			'mobile_enabled' => false,
+			'canvas_bg'      => 'page',
 			'intro_delay'    => 2.5,
 		);
 		$this->assertSame( $expected, SR_Settings::defaults() );
+	}
+
+	public function test_sanitize_whitelists_canvas_bg() {
+		$this->assertSame( 'transparent', SR_Settings::sanitize( array( 'canvas_bg' => 'transparent' ) )['canvas_bg'] );
+		$this->assertSame( 'white', SR_Settings::sanitize( array( 'canvas_bg' => 'white' ) )['canvas_bg'] );
+		$this->assertSame( 'page', SR_Settings::sanitize( array( 'canvas_bg' => 'evil' ) )['canvas_bg'] );
 	}
 
 	public function test_get_returns_defaults_when_no_option_stored() {

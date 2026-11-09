@@ -86,6 +86,22 @@ msgid "Off by default: touch devices have no cursor metaphor."
 msgstr ""
 
 #: includes/class-sr-admin.php
+msgid "Canvas background"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Follow page"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Transparent (keep site background)"
+msgstr ""
+
+#: includes/class-sr-admin.php
+msgid "Blank white"
+msgstr ""
+
+#: includes/class-sr-admin.php
 msgid "Intro end delay (seconds)"
 msgstr ""
 

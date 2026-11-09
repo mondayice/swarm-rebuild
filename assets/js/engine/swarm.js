@@ -24,6 +24,11 @@
   // its English original when the config is absent.
   const ENGINE_CFG = window.SwarmRebuildEngineConfig || {};
   const STR = ENGINE_CFG.strings || {};
+  // Canvas backdrop mode: "page" paints the captured page background, "white"
+  // paints a blank canvas, "transparent" keeps the canvas see-through and hides
+  // only the page's content during the erase (media stays visible, so a site's
+  // own background canvases/videos show through the rebuild).
+  const CANVAS_BG = ENGINE_CFG.canvasBackground === "white" || ENGINE_CFG.canvasBackground === "transparent" ? ENGINE_CFG.canvasBackground : "page";
   function t(key, fallback, ...args) {
     let s = STR[key] != null ? STR[key] : fallback;
     for (const a of args) s = String(s).replace("%d", String(a));
@@ -163,6 +168,8 @@
     "base", "datalist", "area", "map", "source", "track", "param", "swarm-rebuild",
   ]);
   const DROP_IN_CLONE = new Set(["script", "style", "noscript", "template", "iframe", "object", "embed", "link", "meta"]);
+  // Media tags kept visible by the transparent-canvas erase CSS.
+  const KEPT_MEDIA = new Set(["canvas", "video", "iframe", "embed", "object"]);
   const REPLACED = new Set(["img", "svg", "video", "canvas", "iframe", "embed", "object", "picture"]);
   const FORMS = new Set(["input", "textarea", "select"]);
   const ATOMIC = new Set(["img", "svg", "video", "canvas", "input", "select", "textarea", "iframe", "picture", "button"]);
@@ -943,6 +950,9 @@
     }
 
     function emitMedia(el, cs, r, ctx, key) {
+      // Transparent canvas: fixed viewport-covering media (background
+      // canvases/videos) stay visible through the erase — don't rebuild them.
+      if (CANVAS_BG === "transparent" && KEPT_MEDIA.has(el.localName) && cs.position === "fixed" && r.width >= innerWidth * 0.9 && r.height >= innerHeight * 0.9) return;
       let src = el;
       let scs = cs;
       if (el.localName === "picture") {
@@ -1682,15 +1692,22 @@
       this._rulersOn = false;
 
       const pb = env.pageBg;
-      this.bg.style.backgroundColor = pb.color;
-      const rgb = (pb.color.match(/[\d.]+/g) || [255, 255, 255]).map(Number);
-      const lum = (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
-      if (lum < 0.4) this.host.style.setProperty("--ph", "#3B3D42");
-      if (pb.image && pb.image !== "none") {
-        this.bg.style.backgroundImage = pb.image;
-        this.bg.style.backgroundSize = pb.size;
-        this.bg.style.backgroundPosition = pb.position;
-        this.bg.style.backgroundRepeat = pb.repeat;
+      if (CANVAS_BG === "transparent") {
+        // See-through canvas: no backdrop paint; the erase keeps media visible,
+        // so the site's own background shows through the rebuild.
+      } else if (CANVAS_BG === "white") {
+        this.bg.style.backgroundColor = "rgb(255, 255, 255)";
+      } else {
+        this.bg.style.backgroundColor = pb.color;
+        const rgb = (pb.color.match(/[\d.]+/g) || [255, 255, 255]).map(Number);
+        const lum = (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
+        if (lum < 0.4) this.host.style.setProperty("--ph", "#3B3D42");
+        if (pb.image && pb.image !== "none") {
+          this.bg.style.backgroundImage = pb.image;
+          this.bg.style.backgroundSize = pb.size;
+          this.bg.style.backgroundPosition = pb.position;
+          this.bg.style.backgroundRepeat = pb.repeat;
+        }
       }
       this.makeIntroLogo();
       document.documentElement.appendChild(host);
@@ -3518,12 +3535,13 @@
       await nextFrame();
       this.renderSoundBtn();
       this.sfx.intro();
+      if (CANVAS_BG === "transparent") hideContentForErase();
       this.view.bg.classList.add("on");
       this.view.intro.classList.add("on");
       this.view.hud.classList.add("on");
       const mark = (k) => (this.timing[k] = Math.round(performance.now() - this.t0));
       await sleep(520);
-      await unhidePage();
+      if (CANVAS_BG !== "transparent") await unhidePage();
       mark("blank");
       if (this.dead) return;
       await this.scan();
@@ -3775,6 +3793,22 @@
         setTimeout(() => this.view.host.remove(), 260);
       }
     }
+  }
+
+  // Transparent-canvas erase: hide the page's content for the rebuild while
+  // keeping media elements (background canvases, videos, iframes) visible, so
+  // the site's own background shows through. Restored by unhidePage() via the
+  // __swarmUnhide hook — the same restore path destroy() already calls.
+  function hideContentForErase() {
+    if (window.__swarmHidden) return;
+    const st = document.createElement("style");
+    st.id = "swarm-rebuild-erase";
+    st.textContent = "html body *:not(canvas):not(video):not(iframe):not(embed):not(object){visibility:hidden!important}";
+    document.head.appendChild(st);
+    window.__swarmHidden = true;
+    window.__swarmUnhide = () => {
+      st.remove();
+    };
   }
 
   // A host page may have hidden everything but media for a screenshot;

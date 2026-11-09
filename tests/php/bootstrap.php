@@ -115,3 +115,11 @@ if ( ! defined( 'SWARM_REBUILD_VERSION' ) ) {
 
 require_once dirname( __DIR__, 2 ) . '/includes/class-sr-settings.php';
 require_once dirname( __DIR__, 2 ) . '/includes/class-sr-frontend.php';
+
+function load_plugin_textdomain( $domain, $deprecated = false, $wp_override = false ) {
+	return true;
+}
+
+function plugin_basename( $file ) {
+	return 'swarm-rebuild/swarm-rebuild.php';
+}
