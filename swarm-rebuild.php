@@ -27,4 +27,7 @@ require_once SWARM_REBUILD_DIR . 'includes/class-sr-frontend.php';
 if ( is_admin() ) {
 	add_action( 'admin_menu', array( 'SR_Admin', 'register_menu' ) );
 	add_action( 'admin_init', array( 'SR_Admin', 'register_settings' ) );
+} else {
+	add_action( 'init', array( 'SR_Frontend', 'register' ) );
+	add_action( 'wp_enqueue_scripts', array( 'SR_Frontend', 'enqueue_assets' ) );
 }

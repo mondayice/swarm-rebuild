@@ -1,7 +1,19 @@
 <?php
 /**
- * Frontend controller: scope/mobile/shortcode gating, module enqueue, JSON config tag.
- * Filled in Task 4.
+ * Frontend controller: scope/mobile/shortcode gating, script-module enqueue,
+ * JSON config tag.
+ *
+ * Runtime flow (hook wiring, verified on the test site — unit tests cover the
+ * pure functions only):
+ *   init                 -> register()               adds the shortcode
+ *   wp_enqueue_scripts   -> enqueue_assets()         gates on should_enqueue(),
+ *                                                    enqueues loader module + card css,
+ *                                                    stashes config for wp_head
+ *   wp_head (prio 1)     -> print_config()           prints #swarm-rebuild-config JSON
+ *
+ * Shortcode autoplay cannot be known at wp_enqueue_scripts time (shortcodes run
+ * during content rendering), so the shortcode renders its own JSON marker tag
+ * (#swarm-rebuild-shortcode) and the loader merges it client-side.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,5 +22,169 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! class_exists( 'SR_Frontend' ) ) {
 	class SR_Frontend {
+
+		const SHORTCODE_TAG    = 'swarm_rebuild';
+		const CONFIG_TAG_ID    = 'swarm-rebuild-config';
+		const SHORTCODE_TAG_ID = 'swarm-rebuild-shortcode';
+
+		/** @var array|null Stashed config for print_config(). */
+		private static $config = null;
+
+		public static function register() {
+			add_shortcode( self::SHORTCODE_TAG, array( __CLASS__, 'render_shortcode' ) );
+		}
+
+		public static function enqueue_assets() {
+			$s   = SR_Settings::get();
+			$ctx = self::current_ctx();
+			if ( ! self::should_enqueue( $s, $ctx ) ) {
+				return;
+			}
+			wp_enqueue_script_module( 'swarm-rebuild-loader', SWARM_REBUILD_URL . 'assets/js/loader.js', array(), SWARM_REBUILD_VERSION );
+			wp_enqueue_style( 'swarm-rebuild-card', SWARM_REBUILD_URL . 'assets/css/card.css', array(), SWARM_REBUILD_VERSION );
+			self::$config = self::build_config( $s, $ctx );
+			add_action( 'wp_head', array( __CLASS__, 'print_config' ), 1 );
+		}
+
+		public static function print_config() {
+			if ( null === self::$config ) {
+				return;
+			}
+			echo wp_get_inline_script_tag(
+				(string) wp_json_encode( self::$config ),
+				array( 'id' => self::CONFIG_TAG_ID, 'type' => 'application/json' )
+			);
+		}
+
+		/**
+		 * Runtime context for gating. Shortcode presence in the main queried
+		 * post's content (sidebars/widgets are not scanned — known limitation).
+		 *
+		 * @return array{is_home: bool, path: string, ua: string, shortcode_active: bool}
+		 */
+		private static function current_ctx() {
+			$post = get_post();
+			$shortcode_active = false;
+			if ( $post instanceof WP_Post && has_shortcode( $post->post_content, self::SHORTCODE_TAG ) ) {
+				$shortcode_active = true;
+			}
+			return array(
+				'is_home'          => is_front_page() || is_home(),
+				'path'             => (string) parse_url( isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/', PHP_URL_PATH ),
+				'ua'               => isset( $_SERVER['HTTP_USER_AGENT'] ) ? $_SERVER['HTTP_USER_AGENT'] : '',
+				'shortcode_active' => $shortcode_active,
+			);
+		}
+
+		/**
+		 * Scope test, slash-normalized on both sides.
+		 *
+		 * @param array  $s       Settings.
+		 * @param string $path    Request path, e.g. '/about/'.
+		 * @param bool   $is_home Whether the request is the front page.
+		 */
+		public static function is_in_scope( array $s, $path, $is_home ) {
+			$scope = $s['scope'];
+			if ( 'site' === $scope ) {
+				return true;
+			}
+			if ( 'home' === $scope ) {
+				return (bool) $is_home;
+			}
+			$needle = trim( (string) $path, '/' );
+			foreach ( (array) $s['scope_urls'] as $url ) {
+				if ( trim( (string) $url, '/' ) === $needle ) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/**
+		 * Mobile detection by user agent. Desktop UA with touch (Surface etc.)
+		 * stays enabled — the cursor metaphor still applies there.
+		 */
+		public static function is_mobile_request( $ua ) {
+			return (bool) preg_match( '/Mobile|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WebOS|BlackBerry/i', (string) $ua );
+		}
+
+		/**
+		 * Enqueue gate. Short-circuit order: mobile gate → shortcode → scope.
+		 *
+		 * @param array $s   Settings.
+		 * @param array $ctx {is_home, path, ua, shortcode_active}
+		 */
+		public static function should_enqueue( array $s, array $ctx ) {
+			if ( empty( $s['mobile_enabled'] ) && self::is_mobile_request( $ctx['ua'] ) ) {
+				return false;
+			}
+			if ( ! empty( $ctx['shortcode_active'] ) ) {
+				return true;
+			}
+			return self::is_in_scope( $s, $ctx['path'], $ctx['is_home'] );
+		}
+
+		/**
+		 * Truthy shortcode attribute: 'true'|'1'|'yes' (case-insensitive) or bool true.
+		 */
+		public static function is_truthy_attr( $value ) {
+			if ( is_bool( $value ) ) {
+				return $value;
+			}
+			return in_array( strtolower( trim( (string) $value ) ), array( 'true', '1', 'yes' ), true );
+		}
+
+		/**
+		 * [swarm_rebuild autoplay="true|1|yes"] — renders an invisible JSON marker
+		 * the loader merges client-side. Enqueue gating happens via has_shortcode
+		 * on the post content, not through this callback.
+		 */
+		public static function render_shortcode( $atts = array() ) {
+			$a        = shortcode_atts( array( 'autoplay' => 'false' ), $atts, self::SHORTCODE_TAG );
+			$autoplay = self::is_truthy_attr( $a['autoplay'] );
+			return wp_get_inline_script_tag(
+				(string) wp_json_encode( array( 'autoplay' => $autoplay ) ),
+				array( 'id' => self::SHORTCODE_TAG_ID, 'type' => 'application/json' )
+			);
+		}
+
+		/**
+		 * Loader config JSON (shape pinned in the plan; engineUrl included so the
+		 * loader can lazily inject the engine from plugin assets).
+		 *
+		 * @param array $s   Settings.
+		 * @param array $ctx {is_home, path}
+		 */
+		public static function build_config( array $s, array $ctx ) {
+			$autoplay = ! empty( $s['intro_enabled'] ) && self::is_in_scope( $s, $ctx['path'], $ctx['is_home'] );
+
+			return array(
+				'scopeActive'  => true,
+				'autoplay'     => $autoplay,
+				'autoplayMode' => $autoplay ? 'intro' : null,
+				'hotkeyEnabled' => (bool) $s['hotkey_enabled'],
+				'cardEnabled'  => (bool) $s['card_enabled'],
+				'soundDefault' => (bool) $s['sound_default'],
+				'introDelay'   => (float) $s['intro_delay'],
+				'engineUrl'    => SWARM_REBUILD_URL . 'assets/js/engine/swarm.js',
+				'strings'      => array(
+					'tour'        => 'Tour',
+					'goLive'      => 'Go live',
+					'replay'      => 'Replay',
+					'tapForSound' => 'Tap for sound',
+					'soundOn'     => 'Sound on',
+					'soundOff'    => 'Sound off',
+					'exit'        => 'Exit',
+					'agentsReady' => '%d agents ready',
+					'rebuiltIn'   => 'Rebuilt by %d agents in %ds',
+					'sizeBadge'   => '%d × %d',
+					'cardReplay'  => 'Replay',
+					'cardClose'   => 'Close animation',
+					'cardSound'   => 'Sound',
+					'cardHide'    => 'Hide',
+					'cardShow'    => 'Show',
+				),
+			);
+		}
 	}
 }

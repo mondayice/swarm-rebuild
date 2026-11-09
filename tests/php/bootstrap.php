@@ -37,4 +37,41 @@ function untrailingslashit( $value ) {
 	return rtrim( $value, '/' );
 }
 
+function add_action( $tag, $callback, $priority = 10, $accepted_args = 1 ) {
+	return true;
+}
+
+function add_shortcode( $tag, $callback ) {
+	$GLOBALS['__sr_registered_tag'] = $tag;
+	return true;
+}
+
+function shortcode_atts( $defaults, $atts, $shortcode = '' ) {
+	$out = array();
+	foreach ( $defaults as $key => $value ) {
+		$out[ $key ] = array_key_exists( $key, (array) $atts ) ? ( (array) $atts )[ $key ] : $value;
+	}
+	return $out;
+}
+
+function wp_json_encode( $data ) {
+	return json_encode( $data );
+}
+
+function wp_get_inline_script_tag( $code, $attrs = array() ) {
+	$pairs = '';
+	foreach ( $attrs as $key => $value ) {
+		$pairs .= ' ' . $key . '="' . $value . '"';
+	}
+	return '<script' . $pairs . '>' . $code . '</script>';
+}
+
+if ( ! defined( 'SWARM_REBUILD_URL' ) ) {
+	define( 'SWARM_REBUILD_URL', 'https://example.com/wp-content/plugins/swarm-rebuild/' );
+}
+if ( ! defined( 'SWARM_REBUILD_VERSION' ) ) {
+	define( 'SWARM_REBUILD_VERSION', '0.1.0' );
+}
+
 require_once dirname( __DIR__, 2 ) . '/includes/class-sr-settings.php';
+require_once dirname( __DIR__, 2 ) . '/includes/class-sr-frontend.php';
