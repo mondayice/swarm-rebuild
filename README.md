@@ -1,6 +1,6 @@
 # Swarm Rebuild for WordPress
 
-把页面擦成空白画布,一群多人光标实时将其重建——重建过程中已完成的链接即可点击跳转,站点壁纸全程可见。
+WordPress多光标实时重建——重建过程中已完成的链接即可点击跳转,站点壁纸全程可见。
 
 > Wipe the page to a blank canvas and let a swarm of multiplayer cursors rebuild it live — rebuilt links become clickable while the swarm builds, and the site wallpaper stays visible throughout.
 
